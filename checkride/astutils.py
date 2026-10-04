@@ -1,4 +1,4 @@
-"""AST helpers shared by every agentgauge rule.
+"""AST helpers shared by every checkride rule.
 
 Everything here answers one of three questions about a parsed file:
   1. What is this call actually calling?   -> dotted_name / call_name
@@ -16,12 +16,12 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from agentgauge import suppression
-from agentgauge.config import RuleConfig
+from checkride import suppression
+from checkride.config import RuleConfig
 
 if TYPE_CHECKING:
-    from agentgauge.approval import ApprovalAnalyzer
-    from agentgauge.callgraph import ProgramIndex
+    from checkride.approval import ApprovalAnalyzer
+    from checkride.callgraph import ProgramIndex
 
 # Full dotted names that always mean a sensitive action. Matched exactly,
 # so harmless lookalikes (platform.system, df.eval) are not flagged.
@@ -618,13 +618,13 @@ def enclosing_function(
 """Suppression marker introducer.
 
 Deliberately documented in a docstring rather than in `#` comments: this
-module is scanned by agentgauge like any other, and the tokenizer sees a
+module is scanned by checkride like any other, and the tokenizer sees a
 real comment containing the marker followed by prose as a malformed
 directive -- correctly, since that is exactly the "brackets forgotten"
 shape the strictness exists to catch. Writing the examples in a string
 keeps the module's own self-scan clean. See RULES.md.
 
-Only the introducer lives here; the grammar is agentgauge/suppression.py.
+Only the introducer lives here; the grammar is checkride/suppression.py.
 """
 _SUPPRESS_RE = suppression.marker_pattern(r"#")
 
@@ -858,7 +858,7 @@ class FileContext:
     @cached_property
     def approval(self) -> "ApprovalAnalyzer":
         """Approval-dominance analysis for this file (see approval.py)."""
-        from agentgauge.approval import ApprovalAnalyzer
+        from checkride.approval import ApprovalAnalyzer
 
         return ApprovalAnalyzer(
             self.tree,
@@ -875,7 +875,7 @@ class FileContext:
         otherwise one built from this file alone."""
         if self.program is not None:
             return self.program
-        from agentgauge.callgraph import ProgramIndex, summarize
+        from checkride.callgraph import ProgramIndex, summarize
 
         module = self.module or self.path.rsplit("/", 1)[-1].removesuffix(".py")
         return ProgramIndex.build(
@@ -933,7 +933,7 @@ class FileContext:
         )
 
     def is_suppressed(self, rule: str, line: int) -> bool:
-        """True if an `# agentgauge: ignore` comment on this line covers
+        """True if an `# checkride: ignore` comment on this line covers
         this rule -- either unqualified (covers every rule) or naming it
         explicitly by RULE_ID."""
         if line not in self.suppressions:

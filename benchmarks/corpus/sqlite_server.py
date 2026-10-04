@@ -23,7 +23,7 @@ def read_query(query: str) -> list:
         raise ValueError("only SELECT statements are allowed")
     try:
         # sqlite3 runs one statement per execute(), so a validated SELECT
-        # cannot modify data; agentgauge cannot know that.
+        # cannot modify data; checkride cannot know that.
         return conn.execute(query).fetchall()  # known-fp: human-oversight
     except sqlite3.Error as exc:
         log.error("query failed: %s", exc)

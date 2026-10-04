@@ -57,12 +57,12 @@ jobs:
       - run: pip install -e ".[dev]"
 
       - name: ruff
-        run: ruff check agentgauge/ tests/ benchmarks/
+        run: ruff check checkride/ tests/ benchmarks/
 
       - name: mypy --strict
         # Enforces the py.typed marker the package ships. Without this the
         # marker is an unverified claim, which is exactly the kind of thing
-        # agentgauge exists to complain about in other people's code.
+        # checkride exists to complain about in other people's code.
         run: mypy
 
   dogfood:
@@ -74,7 +74,7 @@ jobs:
     # Every gate that expects a NON-ZERO exit captures it with
     # `&& code=0 || code=$?` and redirects to a file rather than a pipe.
     # GitHub runs `run:` blocks under `bash -e`, so a bare
-    # `agentgauge ...; test $? -eq 1` aborts the step the instant agentgauge
+    # `checkride ...; test $? -eq 1` aborts the step the instant checkride
     # exits 1 -- on precisely the behavior the gate exists to assert.
     # Avoiding pipes keeps these steps correct with or without `pipefail`.
     runs-on: ubuntu-latest
@@ -86,9 +86,9 @@ jobs:
       - run: pip install -e .
 
       - name: Own source is finding-free
-        # This gate used to be `agentgauge . --min-score 100
+        # This gate used to be `checkride . --min-score 100
         # --fail-on-incomplete`, which passed for a reason that was not the
-        # one it advertised: agentgauge's own source contains no sinks, no
+        # one it advertised: checkride's own source contains no sinks, no
         # tool functions and no governance flags, so every category scored
         # "no applicable sites" -> full marks -> 100.0/100. It asserted
         # arithmetic over an empty set, not a clean codebase. Zero sites is
@@ -96,7 +96,7 @@ jobs:
         # findings -- and the "scores 100 against real sites" claim is
         # carried by the clean fixture below, which has 24 of them.
         run: |
-          agentgauge . --json > "$RUNNER_TEMP/self.json" && code=0 || code=$?
+          checkride . --json > "$RUNNER_TEMP/self.json" && code=0 || code=$?
           if [ "$code" -ne 0 ]; then
             echo "::error::self-scan exited $code, expected 0"
             exit 1
@@ -107,15 +107,15 @@ jobs:
           assert r["findings"] == [], r["findings"]
           assert r["skipped"] == [], r["skipped"]
           assert r["total_sites"] == 0, (
-              f"agentgauge's own source now has {r['total_sites']} site(s); "
+              f"checkride's own source now has {r['total_sites']} site(s); "
               "if that is intentional, gate this on --min-score instead"
           )
           PY
 
       - name: Clean fixture scores 100 against real sites
         run: |
-          agentgauge tests/fixtures/clean_server.py --min-score 100 --fail-on-incomplete
-          agentgauge tests/fixtures/clean_server.py --json > "$RUNNER_TEMP/clean.json"
+          checkride tests/fixtures/clean_server.py --min-score 100 --fail-on-incomplete
+          checkride tests/fixtures/clean_server.py --json > "$RUNNER_TEMP/clean.json"
           python - <<'PY'
           import json, os
           r = json.load(open(os.environ["RUNNER_TEMP"] + "/clean.json"))
@@ -132,13 +132,13 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/nosites"
           printf 'def add(a, b):\n    return a + b\n' > "$RUNNER_TEMP/nosites/util.py"
-          agentgauge "$RUNNER_TEMP/nosites" --min-score 100 --fail-on-incomplete \
+          checkride "$RUNNER_TEMP/nosites" --min-score 100 --fail-on-incomplete \
             && code=0 || code=$?
           if [ "$code" -ne 1 ]; then
             echo "::error::zero-site scan exited $code, expected 1 -- the vacuous-pass hole is back"
             exit 1
           fi
-          agentgauge "$RUNNER_TEMP/nosites" --scope all --min-score 100 --fail-on-incomplete \
+          checkride "$RUNNER_TEMP/nosites" --scope all --min-score 100 --fail-on-incomplete \
             && code=0 || code=$?
           if [ "$code" -ne 1 ]; then
             echo "::error::zero-site scan exited $code, expected 1 -- the vacuous-pass hole is back"
@@ -147,14 +147,14 @@ jobs:
 
       - name: Vulnerable fixture is still detected
         # The regression gate that matters: if detection silently breaks,
-        # agentgauge exits 0 here and the build must fail.
+        # checkride exits 0 here and the build must fail.
         run: |
-          agentgauge tests/fixtures/vulnerable_server.py && code=0 || code=$?
+          checkride tests/fixtures/vulnerable_server.py && code=0 || code=$?
           if [ "$code" -ne 1 ]; then
             echo "::error::vulnerable fixture exited $code, expected 1 -- detection regressed"
             exit 1
           fi
-          agentgauge tests/fixtures/vulnerable_server.py --json > "$RUNNER_TEMP/vuln.json" && code=0 || code=$?
+          checkride tests/fixtures/vulnerable_server.py --json > "$RUNNER_TEMP/vuln.json" && code=0 || code=$?
           if [ "$code" -ne 1 ]; then
             echo "::error::--json run exited $code, expected 1"
             exit 1
@@ -168,8 +168,8 @@ jobs:
 
       - name: JSON and SARIF output are well-formed
         run: |
-          agentgauge . --json > "$RUNNER_TEMP/report.json"
-          agentgauge . --sarif > "$RUNNER_TEMP/report.sarif"
+          checkride . --json > "$RUNNER_TEMP/report.json"
+          checkride . --sarif > "$RUNNER_TEMP/report.sarif"
           python - <<'PY'
           import json, os
           json.load(open(os.environ["RUNNER_TEMP"] + "/report.json"))
@@ -195,7 +195,7 @@ jobs:
               "import shutil\n@mcp.tool()\ndef wipe(p):\n    shutil.rmtree(p)\n"
           )
           PY
-          agentgauge "$RUNNER_TEMP/hostile" --json > "$RUNNER_TEMP/hostile.json" && code=0 || code=$?
+          checkride "$RUNNER_TEMP/hostile" --json > "$RUNNER_TEMP/hostile.json" && code=0 || code=$?
           if [ "$code" -ne 1 ]; then
             echo "::error::hostile scan exited $code, expected 1"
             exit 1
@@ -243,12 +243,12 @@ jobs:
           python -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install dist/*.whl
           cd "$RUNNER_TEMP"
-          "$RUNNER_TEMP/venv/bin/agentgauge" --version
-          "$RUNNER_TEMP/venv/bin/agentgauge" "$GITHUB_WORKSPACE/tests/fixtures/clean_server.py" --min-score 100 --fail-on-incomplete
-          "$RUNNER_TEMP/venv/bin/agentgauge" "$GITHUB_WORKSPACE/tests/fixtures/vulnerable_server.py" && code=0 || code=$?
+          "$RUNNER_TEMP/venv/bin/checkride" --version
+          "$RUNNER_TEMP/venv/bin/checkride" "$GITHUB_WORKSPACE/tests/fixtures/clean_server.py" --min-score 100 --fail-on-incomplete
+          "$RUNNER_TEMP/venv/bin/checkride" "$GITHUB_WORKSPACE/tests/fixtures/vulnerable_server.py" && code=0 || code=$?
           if [ "$code" -ne 1 ]; then
             echo "::error::installed wheel exited $code on the vulnerable fixture, expected 1"
             exit 1
           fi
-          "$RUNNER_TEMP/venv/bin/pip" show agentgauge | grep -i '^Requires: *$'
+          "$RUNNER_TEMP/venv/bin/pip" show checkride | grep -i '^Requires: *$'
 

@@ -1,4 +1,4 @@
-"""Measure agentgauge against a labelled corpus.
+"""Measure checkride against a labelled corpus.
 
 Every entry directly under the corpus directory (a file, or a directory
 for cross-file cases) is one scan unit. Ground truth is written next to
@@ -8,21 +8,21 @@ the code it describes, as a trailing comment:
     os.remove(p)               # known-miss: human-oversight
     if not normalize(path):    # known-fp: input-validation
 
-  expect      a real issue agentgauge must report on this line
-  known-miss  a real issue agentgauge does not report (a false negative)
-  known-fp    something agentgauge reports that is not a real issue
+  expect      a real issue checkride must report on this line
+  known-miss  a real issue checkride does not report (a false negative)
+  known-fp    something checkride reports that is not a real issue
 
 and, once per unit, the verdict a reviewer would give it:
 
     # expect-verdict: FAIL_CRITICAL      (or NOT_CRITICAL)
 
 Precision and recall are computed against expect + known-miss. The run
-fails if what agentgauge reports differs in any way from expect + known-fp:
+fails if what checkride reports differs in any way from expect + known-fp:
 a regression and an unrecorded improvement both need a label change, made
 on purpose, in the same commit.
 
 Only the four rules whose ground truth a reviewer can judge independently
-of agentgauge's own definition are measured. Audit logging and rate
+of checkride's own definition are measured. Audit logging and rate
 limiting are presence checks -- "is there a logging call" -- so labelling
 them would only restate the rule.
 
@@ -40,8 +40,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from agentgauge.config import Config
-from agentgauge.scanner import scan
+from checkride.config import Config
+from checkride.scanner import scan
 
 MEASURED_RULES = (
     "human-oversight",

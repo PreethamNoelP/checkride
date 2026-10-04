@@ -41,8 +41,8 @@ import ast
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from agentgauge.approval import is_approval_name
-from agentgauge.astutils import (
+from checkride.approval import is_approval_name
+from checkride.astutils import (
     FileContext,
     FunctionNode,
     call_name,
@@ -50,7 +50,7 @@ from agentgauge.astutils import (
     name_tokens,
     word_tokens,
 )
-from agentgauge.models import Finding
+from checkride.models import Finding
 
 RULE_ID = "input-validation"
 CATEGORY = "Tool scope & input validation"
@@ -343,7 +343,7 @@ def _model_field_sites(
 
 
 def _params(fn: FunctionNode) -> list[ast.arg]:
-    from agentgauge.approval import is_framework_param
+    from checkride.approval import is_framework_param
 
     return [
         a for a in (*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs)

@@ -1,12 +1,35 @@
 # Changelog
 
-All notable changes to agentgauge are documented here.
+All notable changes to checkride (named agentgauge until 0.5.0) are
+documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and versions follow [semantic versioning](https://semver.org/). For a
 scanner, "breaking" includes anything that can change a repository's score
 or verdict, since that is what CI gates on — those are called out
 explicitly.
+
+## [0.5.0] — 2026-10-04
+
+### Changed — renamed from agentgauge to checkride (breaking)
+
+The PyPI name `agentgauge` collides with an existing, unrelated AI-agent
+project, `agent-gauge` (PyPI treats the two spellings as the same name and
+would refuse the upload, and users could confuse them). The project is now
+**checkride** — after the test a pilot must pass before being trusted with
+a plane.
+
+- Install and run: `pip install checkride`, then `checkride .`
+- Python package: `import checkride`
+- Configuration table: `[tool.checkride]` (was `[tool.agentgauge]`)
+- Suppression comments: `# checkride: ignore[rule-id]` (was
+  `# agentgauge: ignore`)
+- SARIF: tool name `checkride`, fingerprint key `checkride/v1`
+- GitHub Action and pre-commit hook: `PreethamNoelP/checkride`, hook id
+  `checkride`
+
+No detection or scoring changes. Releases 0.2.0–0.4.0 below were tagged
+under the old name and never published to PyPI.
 
 ## [0.4.0] — 2026-10-03
 

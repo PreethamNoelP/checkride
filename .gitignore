@@ -40,10 +40,10 @@ credentials.*
 .npmrc
 secrets.*
 
-# agentgauge's own report output. `agentgauge . --sarif > report.sarif` in
+# checkride's own report output. `checkride . --sarif > report.sarif` in
 # the repo root is a very easy accident to commit.
 *.sarif
-agentgauge-report.json
+checkride-report.json
 
 # OS noise
 Thumbs.db

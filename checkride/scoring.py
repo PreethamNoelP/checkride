@@ -13,10 +13,10 @@ from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import AcceptedRisk
-from agentgauge.models import CategoryResult, Finding
-from agentgauge.rules import (
+from checkride.astutils import FileContext
+from checkride.config import AcceptedRisk
+from checkride.models import CategoryResult, Finding
+from checkride.rules import (
     audit,
     defaults,
     errorhandling,
@@ -169,7 +169,7 @@ def _suppression_warnings(ctx: FileContext, known_rule_ids: set[str]) -> list[st
     that could not be parsed (they grant nothing), and markers naming a rule
     id that does not exist."""
     notes = [
-        f"{ctx.path}:{line}: malformed agentgauge suppression ({reason}) "
+        f"{ctx.path}:{line}: malformed checkride suppression ({reason}) "
         "-- nothing was suppressed"
         for line, reason in ctx.malformed_suppressions
     ]
@@ -178,7 +178,7 @@ def _suppression_warnings(ctx: FileContext, known_rule_ids: set[str]) -> list[st
             continue
         for unknown in sorted(rules - known_rule_ids):
             notes.append(
-                f"{ctx.path}:{line}: agentgauge suppression names unknown rule "
+                f"{ctx.path}:{line}: checkride suppression names unknown rule "
                 f"'{unknown}' -- it has no effect"
             )
     return notes

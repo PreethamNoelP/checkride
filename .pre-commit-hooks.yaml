@@ -1,24 +1,24 @@
-# Lets any repo run agentgauge via pre-commit:
+# Lets any repo run checkride via pre-commit:
 #
 #   repos:
-#     - repo: https://github.com/PreethamNoelP/agentgauge
-#       rev: v0.4.0
+#     - repo: https://github.com/PreethamNoelP/checkride
+#       rev: v0.5.0
 #       hooks:
-#         - id: agentgauge
+#         - id: checkride
 #           args: [--fail-on-incomplete]
 #
 # pass_filenames is false on purpose, and it is not a workaround for the
-# CLI taking a single target. agentgauge's score and verdict are whole-repo
+# CLI taking a single target. checkride's score and verdict are whole-repo
 # aggregates: a category scores `passed / applicable sites` across every
 # file, so running it over just the files in one commit would compute a
 # percentage against a different denominator every time and report a score
 # that moves for reasons that have nothing to do with the change. The
 # verdict has the same problem in the other direction -- an ungated sink in
 # an untouched file would go unreported.
-- id: agentgauge
-  name: agentgauge (agent governance scan)
+- id: checkride
+  name: checkride (agent governance scan)
   description: Scan this repository for missing AI-agent governance controls.
-  entry: agentgauge
+  entry: checkride
   language: python
   args: ["."]
   pass_filenames: false

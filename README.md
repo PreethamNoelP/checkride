@@ -1,18 +1,24 @@
 <div align="center">
 
-# 🛡️ agentgauge
+# 🛡️ checkride
 
-**Find the dangerous things your AI agent can do without asking a human.**
+**Every agent needs a checkride before it flies.**
 
-[![CI](https://github.com/PreethamNoelP/agentgauge/actions/workflows/ci.yml/badge.svg)](https://github.com/PreethamNoelP/agentgauge/actions/workflows/ci.yml)
+Find the dangerous things your AI agent can do without asking a human.
+
+[![CI](https://github.com/PreethamNoelP/checkride/actions/workflows/ci.yml/badge.svg)](https://github.com/PreethamNoelP/checkride/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/PreethamNoelP/agentgauge/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](https://github.com/PreethamNoelP/checkride/blob/main/LICENSE)
 
 </div>
 
-agentgauge is a static scanner for MCP servers and AI-agent tool code. It
-finds every function a model can call, follows what those functions do
+Before a pilot is trusted with a plane, they pass a *checkride*: an
+examiner watches them fly and checks every safety procedure. checkride does
+that for AI agents, before you hand them real power.
+
+It is a static scanner for MCP servers and AI-agent tool code. It finds
+every function a model can call, follows what those functions do
 across your repository, and flags destructive actions — deleting files,
 running commands, executing SQL, moving money — that have no human
 approval, logging, limits or input validation in front of them.
@@ -22,14 +28,14 @@ approval, logging, limits or input validation in front of them.
 ## Quick start
 
 ```console
-$ pip install agentgauge
+$ pip install checkride
 $ cd your-project
-$ agentgauge .
+$ checkride .
 ```
 
 Python 3.11+. No dependencies, no account, no network access, and it never
 runs the code it reads. (Before the first PyPI release:
-`pip install git+https://github.com/PreethamNoelP/agentgauge.git@v0.4.0`.)
+`pip install git+https://github.com/PreethamNoelP/checkride.git@v0.5.0`.)
 
 ## What it catches
 
@@ -49,7 +55,7 @@ def delete_note(name: str) -> str:
 ```
 
 ```console
-$ agentgauge .
+$ checkride .
 
   Human oversight                 0.0 / 25   (0/3 sites passed)
   Tool scope & input validation   0.0 / 15   (0/2 sites passed)
@@ -70,7 +76,7 @@ $ agentgauge .
 
 Any model connected to that server — or any prompt injection reaching it —
 can read `../../.ssh/id_rsa` and delete files without anyone being asked.
-agentgauge says so, at the exact line, with the fix.
+checkride says so, at the exact line, with the fix.
 
 ## Who it is for
 
@@ -83,7 +89,7 @@ agentgauge says so, at the exact line, with the fix.
   tool you can approve quickly, with SARIF output for GitHub code scanning
   and a written trail of every accepted risk.
 - **Anyone evaluating a third-party MCP server** before installing it:
-  `agentgauge --no-config path/to/server`.
+  `checkride --no-config path/to/server`.
 
 ## What it checks
 
@@ -126,7 +132,7 @@ Six questions, for every action a model can reach:
 
 The 0–100 score is a trend line. The verdict is what belongs in CI: one
 ungated payment cannot hide behind ninety-nine safe tools, and neither an
-inline `# agentgauge: ignore` nor a baseline can clear a critical finding.
+inline `# checkride: ignore` nor a baseline can clear a critical finding.
 Only a reviewed `accepted_risks` entry can — with a written reason that
 every report repeats.
 
@@ -135,7 +141,7 @@ every report repeats.
 - **Only code an agent can reach is judged.** A `subprocess.run` in your
   build script is not an agent risk; one reached from an `@mcp.tool()` is,
   even three helper calls and two files away. On `pip`, `requests` and
-  `black`, agentgauge reports zero critical findings.
+  `black`, checkride reports zero critical findings.
 - **Approval must come first, and from a human.** It has to run before the
   action, on the way to it. A check placed after the action does not count,
   nor does a tool argument named `confirm` (the model sets it), nor
@@ -147,7 +153,7 @@ every report repeats.
   like one called `path`.
 
 The full rules, with every known blind spot:
-[RULES.md](https://github.com/PreethamNoelP/agentgauge/blob/main/RULES.md).
+[RULES.md](https://github.com/PreethamNoelP/checkride/blob/main/RULES.md).
 
 ## How accurate it is
 
@@ -166,15 +172,15 @@ Critical verdict correct for 14 of 14 test projects. *Precision*: how often
 a finding is a real problem. *Recall*: how many real problems it finds. The
 benchmark projects are written in the shape of real servers rather than
 taken from real repositories, and they deliberately include the cases
-agentgauge gets wrong —
-[benchmarks/README.md](https://github.com/PreethamNoelP/agentgauge/blob/main/benchmarks/README.md).
+checkride gets wrong —
+[benchmarks/README.md](https://github.com/PreethamNoelP/checkride/blob/main/benchmarks/README.md).
 
 ## Use it in CI
 
 **GitHub Actions**
 
 ```yaml
-- uses: PreethamNoelP/agentgauge@v0.4.0
+- uses: PreethamNoelP/checkride@v0.5.0
   with:
     path: .
     fail-on-incomplete: "true"
@@ -183,49 +189,49 @@ agentgauge gets wrong —
 With GitHub code scanning (findings appear on the pull request):
 
 ```yaml
-- uses: PreethamNoelP/agentgauge@v0.4.0
+- uses: PreethamNoelP/checkride@v0.5.0
   with:
-    sarif-file: agentgauge.sarif
+    sarif-file: checkride.sarif
   continue-on-error: true
 - uses: github/codeql-action/upload-sarif@v3
   with:
-    sarif_file: agentgauge.sarif
+    sarif_file: checkride.sarif
 ```
 
 Inputs: `path`, `min-score`, `scope`, `fail-on-incomplete`, `sarif-file`,
 `config`, `no-config`. For the strictest supply-chain posture, pin the tag's
-full commit SHA instead of `v0.4.0`.
+full commit SHA instead of `v0.5.0`.
 
 **pre-commit**
 
 ```yaml
 repos:
-  - repo: https://github.com/PreethamNoelP/agentgauge
-    rev: v0.4.0
+  - repo: https://github.com/PreethamNoelP/checkride
+    rev: v0.5.0
     hooks:
-      - id: agentgauge
+      - id: checkride
         args: [--fail-on-incomplete]
 ```
 
 ## Command line
 
 ```console
-$ agentgauge .                     # scan from the repository root
-$ agentgauge src/server.py         # a single file
-$ agentgauge . --json              # machine-readable report
-$ agentgauge . --sarif > out.sarif # SARIF for code scanning
-$ agentgauge . --min-score 80      # stricter threshold (0 disables)
-$ agentgauge . --fail-on-incomplete
-$ agentgauge . --no-config         # ignore the repo's own settings
-$ agentgauge . --scope all         # judge every function with a sink
+$ checkride .                     # scan from the repository root
+$ checkride src/server.py         # a single file
+$ checkride . --json              # machine-readable report
+$ checkride . --sarif > out.sarif # SARIF for code scanning
+$ checkride . --min-score 80      # stricter threshold (0 disables)
+$ checkride . --fail-on-incomplete
+$ checkride . --no-config         # ignore the repo's own settings
+$ checkride . --scope all         # judge every function with a sink
 ```
 
 Adopting it on an existing project? Record today's findings, then fail
 only on new ones:
 
 ```console
-$ agentgauge . --baseline base.json --update-baseline
-$ agentgauge . --baseline base.json
+$ checkride . --baseline base.json --update-baseline
+$ checkride . --baseline base.json
 ```
 
 Run it from the repository root, so reported paths match what code scanning
@@ -236,7 +242,7 @@ expects.
 Optional, in `pyproject.toml`:
 
 ```toml
-[tool.agentgauge]
+[tool.checkride]
 min_score = 70
 exclude = ["tests/*", "scripts/"]
 
@@ -248,7 +254,7 @@ extra_approval_markers = ["greenlight"]
 assume_external_rate_limiting = true
 
 # A reviewed exception, with a reason every report repeats
-[[tool.agentgauge.accepted_risks]]
+[[tool.checkride.accepted_risks]]
 rule = "human-oversight"
 file = "src/server.py"
 function = "rebuild_index"
@@ -260,7 +266,7 @@ would quietly switch a check off is an error, not a silent no-op. When you
 scan code you do not control, use `--no-config` — otherwise a repository's
 own settings could exclude its files or accept its own risks. Full
 reference:
-[RULES.md#configuration](https://github.com/PreethamNoelP/agentgauge/blob/main/RULES.md#configuration).
+[RULES.md#configuration](https://github.com/PreethamNoelP/checkride/blob/main/RULES.md#configuration).
 
 ## Is it safe to run?
 
@@ -278,12 +284,12 @@ Yes, including on code you don't trust:
 Every row is enforced by an automated test. Reports contain file paths and
 identifier names from your code — never string literals, secrets or source
 lines. See
-[SECURITY.md](https://github.com/PreethamNoelP/agentgauge/blob/main/SECURITY.md)
+[SECURITY.md](https://github.com/PreethamNoelP/checkride/blob/main/SECURITY.md)
 to report a vulnerability.
 
 ## What it cannot do
 
-agentgauge reads code; it does not run it. That makes it safe and fast, and
+checkride reads code; it does not run it. That makes it safe and fast, and
 it sets some honest limits:
 
 - **It can still be wrong.** On the benchmark it finds every known issue,
@@ -298,7 +304,7 @@ it sets some honest limits:
   sensible.
 - **Python only.** TypeScript and JavaScript MCP servers are on the
   roadmap.
-- **A 100/100 is not a certification.** It means every pattern agentgauge
+- **A 100/100 is not a certification.** It means every pattern checkride
   knows is in place — not that nothing else can go wrong.
 
 ## How it works
@@ -316,11 +322,11 @@ it sets some honest limits:
 
 Two passes over the repository, one syntax-tree walk per file per pass, no
 code execution. Design details are in
-[CONTRIBUTING.md](https://github.com/PreethamNoelP/agentgauge/blob/main/CONTRIBUTING.md).
+[CONTRIBUTING.md](https://github.com/PreethamNoelP/checkride/blob/main/CONTRIBUTING.md).
 
 ## Project status
 
-Version 0.4 — usable today, and the rules are still being refined. Tested
+Version 0.5 — usable today, and the rules are still being refined. Tested
 on Linux and Windows, Python 3.11–3.13: 1,222 automated tests, strict type
 checking, linting, the accuracy benchmark, and a build-and-install check of
 the published package, on every change.
@@ -339,14 +345,14 @@ the published package, on every change.
 The most useful contribution is a report of a wrong result — a real problem
 it missed, or a false alarm — with a small code sample. Each one becomes a
 test case. See
-[CONTRIBUTING.md](https://github.com/PreethamNoelP/agentgauge/blob/main/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/PreethamNoelP/checkride/blob/main/CONTRIBUTING.md)
 and the
-[changelog](https://github.com/PreethamNoelP/agentgauge/blob/main/CHANGELOG.md).
+[changelog](https://github.com/PreethamNoelP/checkride/blob/main/CHANGELOG.md).
 
 ## License
 
 Released under the
-[Apache License 2.0](https://github.com/PreethamNoelP/agentgauge/blob/main/LICENSE).
+[Apache License 2.0](https://github.com/PreethamNoelP/checkride/blob/main/LICENSE).
 
 ---
 

@@ -1,4 +1,4 @@
-"""A scanned repository's own [tool.agentgauge] table is attacker-controlled
+"""A scanned repository's own [tool.checkride] table is attacker-controlled
 when the repository is not yours. These pin the two defenses: --no-config
 ignores it, and an exclude that hides a sensitive call says so."""
 
@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from agentgauge.cli import main
-from agentgauge.config import Config, load_config
-from agentgauge.scanner import scan
+from checkride.cli import main
+from checkride.config import Config, load_config
+from checkride.scanner import scan
 
 EVIL = "import subprocess\n@mcp.tool()\ndef run(cmd):\n    subprocess.run(cmd, shell=True)\n"
-HIDING_CONFIG = '[tool.agentgauge]\nexclude = ["pkg/evil.py"]\n'
+HIDING_CONFIG = '[tool.checkride]\nexclude = ["pkg/evil.py"]\n'
 
 
 def _repo(tmp_path: Path) -> Path:

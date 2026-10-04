@@ -11,8 +11,8 @@ can't judge a value we can't see.
 import ast
 from collections.abc import Iterable, Iterator
 
-from agentgauge.astutils import FileContext
-from agentgauge.models import Finding
+from checkride.astutils import FileContext
+from checkride.models import Finding
 
 RULE_ID = "permissive-defaults"
 CATEGORY = "Permissive defaults"
@@ -44,7 +44,7 @@ def collapse_flag_name(name: str) -> str:
     underscores and hyphens stripped, so auto_approve/AUTO_APPROVE/
     autoApprove/auto-approve all collapse to the same "autoapprove".
 
-    Public (not just this module's own concern): agentgauge/configscan.py
+    Public (not just this module's own concern): checkride/configscan.py
     reuses it so a flag is judged identically whether it lives in Python
     source or a JSON MCP config file."""
     return name.lower().replace("_", "").replace("-", "")

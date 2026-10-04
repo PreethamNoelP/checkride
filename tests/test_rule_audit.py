@@ -2,9 +2,9 @@ import dataclasses
 
 import pytest
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import RuleConfig
-from agentgauge.rules import audit
+from checkride.astutils import FileContext
+from checkride.config import RuleConfig
+from checkride.rules import audit
 
 
 def run(src: str, config: RuleConfig | None = None, scope: str = "all"):

@@ -1,5 +1,5 @@
 """JSON config-file scanning: the same "permissive defaults" governance
-question as agentgauge/rules/defaults.py (rule 6), sourced from known MCP
+question as checkride/rules/defaults.py (rule 6), sourced from known MCP
 client config filenames instead of Python AST.
 
 Real deployments set these flags in JSON, not Python -- RULES.md names
@@ -22,10 +22,10 @@ import re
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
-from agentgauge.config import RuleConfig
-from agentgauge.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded
-from agentgauge.models import Finding
-from agentgauge.rules.defaults import (
+from checkride.config import RuleConfig
+from checkride.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded
+from checkride.models import Finding
+from checkride.rules.defaults import (
     DANGEROUS_WHEN_FALSE,
     DANGEROUS_WHEN_TRUE,
     RULE_ID,
@@ -34,10 +34,10 @@ from agentgauge.rules.defaults import (
 
 # Exact basenames recognized as MCP client configuration files, matched
 # case-sensitively like every other exclude/skip check in this tool.
-# Filename-based on purpose, the same way the rest of agentgauge's
+# Filename-based on purpose, the same way the rest of checkride's
 # vocabulary is name-based rather than content-sniffed -- extend an
 # unlisted client's filename via extra_config_filenames in
-# [tool.agentgauge] rather than widening this to something fuzzier.
+# [tool.checkride] rather than widening this to something fuzzier.
 KNOWN_CONFIG_FILENAMES = frozenset({
     "claude_desktop_config.json",  # Claude Desktop
     "mcp.json",                    # generic / VS Code / Cursor (.cursor/mcp.json)

@@ -13,7 +13,7 @@ updates:
     commit-message:
       prefix: "ci"
 
-  # agentgauge has no runtime dependencies and is meant to keep it that way,
+  # checkride has no runtime dependencies and is meant to keep it that way,
   # so this watches exactly two things: the dev-only pytest pin and the
   # setuptools build requirement.
   - package-ecosystem: pip

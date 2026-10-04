@@ -7,11 +7,11 @@ name: Release
 #
 # One-time setup, done on PyPI and GitHub by the maintainer:
 #   1. PyPI -> Your account -> Publishing -> add a pending trusted publisher:
-#        project agentgauge, owner PreethamNoelP, repository agentgauge,
+#        project checkride, owner PreethamNoelP, repository checkride,
 #        workflow release.yml, environment pypi
 #   2. GitHub -> Settings -> Environments -> New environment "pypi"
 #      (optionally require a reviewer, so every publish needs a click)
-# Then: bump agentgauge/__init__.py, tag vX.Y.Z, and publish a GitHub
+# Then: bump checkride/__init__.py, tag vX.Y.Z, and publish a GitHub
 # Release for that tag.
 
 on:
@@ -34,7 +34,7 @@ jobs:
         # A release tagged v0.3.0 must not upload a package that says 0.2.0;
         # PyPI versions are permanent and cannot be re-uploaded.
         run: |
-          version=$(python -c "import agentgauge; print(agentgauge.__version__)")
+          version=$(python -c "import checkride; print(checkride.__version__)")
           if [ "v$version" != "$GITHUB_REF_NAME" ]; then
             echo "::error::release tag $GITHUB_REF_NAME does not match package version $version"
             exit 1
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/agentgauge/
+      url: https://pypi.org/project/checkride/
     permissions:
       id-token: write  # the OIDC token PyPI trusted publishing exchanges
     steps:

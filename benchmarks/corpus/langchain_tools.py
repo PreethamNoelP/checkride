@@ -14,7 +14,7 @@ SCRATCH = "/tmp/agent-scratch/"
 @tool
 def search_docs(query: str) -> str:  # known-fp: input-validation
     """Search the documentation index. A search string is not dangerous;
-    agentgauge flags any parameter named like a query."""
+    checkride flags any parameter named like a query."""
     log.info("search")
     return index.search(query, k=5)
 

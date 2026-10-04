@@ -1,4 +1,4 @@
-"""Command-line interface: `agentgauge <path> [--json|--sarif] [--min-score N]`.
+"""Command-line interface: `checkride <path> [--json|--sarif] [--min-score N]`.
 
 Exit codes are the contract for CI:
   0  verdict is PASS, or INCOMPLETE without --fail-on-incomplete, and (with
@@ -18,17 +18,17 @@ import os
 import sys
 from pathlib import Path
 
-from agentgauge import __version__
-from agentgauge.baseline import (
+from checkride import __version__
+from checkride.baseline import (
     BaselineError,
     diff_against_baseline,
     load_baseline,
     write_baseline,
 )
-from agentgauge.config import SCOPES, Config, ConfigError, load_config
-from agentgauge.sarif import build_sarif
-from agentgauge.scanner import scan
-from agentgauge.scoring import ScanReport
+from checkride.config import SCOPES, Config, ConfigError, load_config
+from checkride.sarif import build_sarif
+from checkride.scanner import scan
+from checkride.scoring import ScanReport
 
 # Scanned repositories are untrusted input, and file names reach the
 # terminal verbatim. A path containing an ANSI escape (legal on Linux and
@@ -46,7 +46,7 @@ _ESCAPES.update({c: f"\\x{c:02x}" for c in range(0x80, 0xA0)})
 # Characters that reorder or hide text without being "control characters" at
 # all. A file named with U+202E RIGHT-TO-LEFT OVERRIDE makes the rest of a
 # finding line render in reverse, so a reviewer reading the report sees a
-# path, rule id or fix that is not the one agentgauge found -- the Trojan
+# path, rule id or fix that is not the one checkride found -- the Trojan
 # Source trick (CVE-2021-42574) pointed at the report instead of at source.
 # Zero-width characters hide content in the same spirit. None of these have
 # any legitimate place in a rendered finding, so they are shown escaped
@@ -78,7 +78,7 @@ def _print_report(
     config_source: str | None,
     baseline_written: int | None = None,
 ) -> None:
-    print(f"agentgauge: {_safe(target)}")
+    print(f"checkride: {_safe(target)}")
     print(f"scanned {report.files_scanned} Python file(s)", end="")
     if report.config_files_scanned:
         print(f" and {report.config_files_scanned} MCP config file(s)", end="")
@@ -169,7 +169,7 @@ _JS_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".mts", ".cts")
 def _has_javascript(target: Path) -> bool:
     """True if the target holds JS/TS sources (outside the usual noise
     directories). Stops at the first one found."""
-    from agentgauge.fswalk import SKIP_DIRS
+    from checkride.fswalk import SKIP_DIRS
 
     if target.is_file():
         return target.suffix in _JS_SUFFIXES
@@ -182,13 +182,13 @@ def _has_javascript(target: Path) -> bool:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="agentgauge",
+        prog="checkride",
         description="Static governance scanner for MCP servers and "
                     "AI agent tool-calling code.",
     )
     parser.add_argument("target", help="Python file or repo directory to scan")
     parser.add_argument(
-        "--version", action="version", version=f"agentgauge {__version__}"
+        "--version", action="version", version=f"checkride {__version__}"
     )
     output_format = parser.add_mutually_exclusive_group()
     output_format.add_argument(
@@ -205,7 +205,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="N",
         help="the score a PASS needs; below it the verdict is FAIL_SCORE "
-             "(default 70, or [tool.agentgauge] min_score; 0 disables)",
+             "(default 70, or [tool.checkride] min_score; 0 disables)",
     )
     parser.add_argument(
         "--scope",
@@ -213,12 +213,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="'tools' (default) judges only code reachable from a recognized "
              "tool entry point; 'all' treats every function that performs a "
-             "sensitive action as a tool (overrides [tool.agentgauge] scope)",
+             "sensitive action as a tool (overrides [tool.checkride] scope)",
     )
     parser.add_argument(
         "--ignore-accepted-risks",
         action="store_true",
-        help="judge findings covered by [tool.agentgauge] accepted_risks as "
+        help="judge findings covered by [tool.checkride] accepted_risks as "
              "if those entries did not exist",
     )
     parser.add_argument(
@@ -234,7 +234,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         metavar="PATH",
-        help="path to a TOML file with a [tool.agentgauge] table; "
+        help="path to a TOML file with a [tool.checkride] table; "
              "default is to look for pyproject.toml next to the target",
     )
     config_source.add_argument(
@@ -242,7 +242,7 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="ignore the target's own pyproject.toml and use the built-in "
              "defaults. Use this when scanning code you do not control: its "
-             "[tool.agentgauge] table can exclude files, disable rules and "
+             "[tool.checkride] table can exclude files, disable rules and "
              "accept risks, so a repository can otherwise grade itself",
     )
     parser.add_argument(
@@ -251,7 +251,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="PATH",
         help="only exit non-zero for findings not already recorded in this "
-             "baseline file -- for adopting agentgauge on an existing repo "
+             "baseline file -- for adopting checkride on an existing repo "
              "without fixing every finding on day one. Never suppresses a "
              "critical finding: --min-score and the FAIL_CRITICAL verdict "
              "still apply exactly as without a baseline",
@@ -273,7 +273,7 @@ def _emit(
 ) -> None:
     """Write the report in the requested format.
 
-    A consumer closing the pipe (`agentgauge . --json | head`) is a normal
+    A consumer closing the pipe (`checkride . --json | head`) is a normal
     end to the conversation, not a scan failure: swallow it, point stdout at
     the null device so the interpreter's exit-time flush does not re-raise,
     and let the exit code still reflect the governance result.
@@ -324,13 +324,13 @@ def main(argv: list[str] | None = None) -> int:
     if not target.exists():
         # Without this check, scanning a typo'd path would find zero files,
         # zero sites -- and report a perfect 100.
-        print(f"agentgauge: target not found: {_safe(args.target)}", file=sys.stderr)
+        print(f"checkride: target not found: {_safe(args.target)}", file=sys.stderr)
         return 2
 
     try:
         config = Config() if args.no_config else load_config(target, args.config)
     except ConfigError as exc:
-        print(f"agentgauge: {exc}", file=sys.stderr)
+        print(f"checkride: {exc}", file=sys.stderr)
         return 2
 
     if args.scope is not None:
@@ -341,7 +341,7 @@ def main(argv: list[str] | None = None) -> int:
         config = dataclasses.replace(config, accepted_risks=())
     if args.min_score is not None:
         if not 0 <= args.min_score <= 100:
-            print("agentgauge: --min-score must be between 0 and 100", file=sys.stderr)
+            print("checkride: --min-score must be between 0 and 100", file=sys.stderr)
             return 2
         config = dataclasses.replace(config, min_score=args.min_score)
 
@@ -356,14 +356,14 @@ def main(argv: list[str] | None = None) -> int:
         # even though files_scanned alone would read as zero.
         _print_warnings(report)
         print(
-            f"agentgauge: no Python or MCP config files scanned under "
+            f"checkride: no Python or MCP config files scanned under "
             f"{_safe(args.target)} -- refusing to report a score based on "
             "zero evidence",
             file=sys.stderr,
         )
         if _has_javascript(target):
             print(
-                "agentgauge: this looks like a JavaScript/TypeScript project; "
+                "checkride: this looks like a JavaScript/TypeScript project; "
                 "only Python agent code is supported for now",
                 file=sys.stderr,
             )
@@ -387,7 +387,7 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 baseline = load_baseline(args.baseline)
             except BaselineError as exc:
-                print(f"agentgauge: {exc}", file=sys.stderr)
+                print(f"checkride: {exc}", file=sys.stderr)
                 return 2
             report.baseline_applied = True
             report.baseline_new = diff_against_baseline(report.findings, baseline)

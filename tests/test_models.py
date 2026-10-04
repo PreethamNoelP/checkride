@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from agentgauge.models import CategoryResult, Finding
+from checkride.models import CategoryResult, Finding
 
 
 def test_no_applicable_sites_scores_full_weight():

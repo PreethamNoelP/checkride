@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/PreethamNoelP/agentgauge/security/advisories/new
+    url: https://github.com/PreethamNoelP/checkride/security/advisories/new
     about: Please report vulnerabilities privately, not in a public issue.
   - name: Rules and known blind spots
-    url: https://github.com/PreethamNoelP/agentgauge/blob/main/RULES.md
+    url: https://github.com/PreethamNoelP/checkride/blob/main/RULES.md
     about: Check whether a result is a documented limit before reporting it.

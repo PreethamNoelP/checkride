@@ -35,10 +35,10 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from agentgauge.astutils import FunctionNode, dotted_name, word_tokens
+from checkride.astutils import FunctionNode, dotted_name, word_tokens
 
 if TYPE_CHECKING:
-    from agentgauge.astutils import FileContext
+    from checkride.astutils import FileContext
 
 Key = tuple[str, int, int]  # (file path as reported, def lineno, def col)
 
@@ -227,9 +227,9 @@ def _registration_refs(call: ast.Call, aliases: dict[str, str]) -> list[Ref]:
 def summarize(ctx: "FileContext", module: str, is_package: bool = False) -> FileSummary:
     """Everything the cross-file analysis needs from one file. Holds no AST
     nodes, so a whole repository's summaries stay small."""
-    from agentgauge.rules.audit import makes_log_call
-    from agentgauge.rules.errorhandling import protection
-    from agentgauge.rules.ratelimit import mentions_rate_limit
+    from checkride.rules.audit import makes_log_call
+    from checkride.rules.errorhandling import protection
+    from checkride.rules.ratelimit import mentions_rate_limit
 
     tree = ctx.tree
     aliases = _module_aliases(ctx.all_nodes, module, is_package)
@@ -353,7 +353,7 @@ def _is_approval_decorator(fn: FunctionNode, ctx: "FileContext") -> bool:
 
     The wrapped function is any parameter of `fn` or of a function nested
     between `fn` and the wrapper (a factory's inner decorator)."""
-    from agentgauge.approval import _function_params
+    from checkride.approval import _function_params
 
     def search(outer: ast.AST, wrapped: frozenset[str], depth: int) -> bool:
         for inner in ctx.direct_defs(outer):

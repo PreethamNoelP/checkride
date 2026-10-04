@@ -18,9 +18,9 @@ Math functions that happen to be called log (`math.log`, `np.log`,
 import ast
 from collections.abc import Iterable
 
-from agentgauge.astutils import FileContext, call_name, iter_scope, name_tokens
-from agentgauge.config import RuleConfig
-from agentgauge.models import Finding
+from checkride.astutils import FileContext, call_name, iter_scope, name_tokens
+from checkride.config import RuleConfig
+from checkride.models import Finding
 
 RULE_ID = "audit-logging"
 CATEGORY = "Audit logging"

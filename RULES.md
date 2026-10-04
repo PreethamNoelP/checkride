@@ -1,4 +1,4 @@
-# agentgauge rules
+# checkride rules
 
 Every rule is a *heuristic*: a static approximation of a governance property
 that really depends on runtime behavior. This document states each one
@@ -17,7 +17,7 @@ to trust a finding or a pass. Measured accuracy is in
 - [Rule 4 — Error handling](#error-handling)
 - [Rule 5 — Tool scope & input validation](#input-validation)
 - [Rule 6 — Permissive defaults](#permissive-defaults)
-- [What agentgauge reads, and what it skips](#what-agentgauge-reads)
+- [What checkride reads, and what it skips](#what-checkride-reads)
 - [Configuration](#configuration)
 - [Accepted risks, suppressions and baselines](#accepted-risks-suppressions-and-baselines)
 - [Output formats](#output-formats)
@@ -28,7 +28,7 @@ to trust a finding or a pass. Measured accuracy is in
 
 A destructive call is an *agent* risk only if a model can reach it. A build
 script that runs `rm -rf build/` is not an agent tool, and treating it as
-one makes every real repository fail. So agentgauge first works out which
+one makes every real repository fail. So checkride first works out which
 functions a model can call, then judges exactly the code those functions
 reach.
 
@@ -103,7 +103,7 @@ a floor a team agrees on, not as a certification.
 <a id="sensitive-calls"></a>
 ## Sensitive calls
 
-Defined in `agentgauge/astutils.py`. Every label below is **critical**.
+Defined in `checkride/astutils.py`. Every label below is **critical**.
 
 | Label | Detected as |
 |---|---|
@@ -144,7 +144,7 @@ the import. Python only: TypeScript/JavaScript MCP servers are not read.
 
 **Every reachable sensitive call must be dominated by a human-approval
 check** — one that runs before it, in its own execution scope, on the way to
-it. Implemented in `agentgauge/approval.py`.
+it. Implemented in `checkride/approval.py`.
 
 A call is gated if any of these holds:
 
@@ -350,8 +350,8 @@ means "production". String values and environment variables
 (`os.environ.get("AUTO_APPROVE", "true")`) are invisible, as are `.env` and
 YAML files.
 
-<a id="what-agentgauge-reads"></a>
-## What agentgauge reads, and what it skips
+<a id="what-checkride-reads"></a>
+## What checkride reads, and what it skips
 
 `.py` files under the target in sorted order, plus the MCP config files
 above. Nothing is imported, executed or evaluated — `ast.parse` and
@@ -371,12 +371,12 @@ matched relative to the scan root.
 <a id="configuration"></a>
 ## Configuration
 
-An optional `[tool.agentgauge]` table in `pyproject.toml` next to the scan
+An optional `[tool.checkride]` table in `pyproject.toml` next to the scan
 target (or a file passed with `--config`). No upward search: the report
 names the config file it applied, so one that was not picked up is visible.
 
 ```toml
-[tool.agentgauge]
+[tool.checkride]
 min_score = 70                        # PASS threshold; 0 disables; --min-score overrides
 scope = "tools"                       # or "all"; --scope overrides
 exclude = ["tests/*", "**/generated_*.py", "vendor/"]
@@ -393,7 +393,7 @@ extra_dangerous_when_true = ["yolo_mode"]
 extra_dangerous_when_false = ["least_privilege"]
 extra_config_filenames = ["my_client_mcp.json"]
 
-[[tool.agentgauge.accepted_risks]]
+[[tool.checkride.accepted_risks]]
 rule = "human-oversight"
 file = "src/server.py"
 function = "rebuild_index"            # optional; qualified or bare name
@@ -431,7 +431,7 @@ Three ways to live with a finding, deliberately different in strength:
 | Mechanism | Scope | Clears a critical finding? | Where it is recorded |
 |---|---|---|---|
 | `accepted_risks` in config | rule + file (+ function, + call) | **yes** | config file under review; listed with its reason in every report; SARIF `external` suppression |
-| `# agentgauge: ignore[rule-id]` | one line | no — still `FAIL_CRITICAL` | the source line; SARIF `inSource` suppression |
+| `# checkride: ignore[rule-id]` | one line | no — still `FAIL_CRITICAL` | the source line; SARIF `inSource` suppression |
 | `--baseline FILE` | the findings that existed when it was written | no — critical findings are never written into a baseline | the baseline file |
 
 **Accepted risks** exist because a static heuristic will sometimes be wrong
@@ -444,8 +444,8 @@ accepted findings with their reasons; an entry that matches nothing is a
 warning; `--ignore-accepted-risks` judges the code as if none existed.
 
 **Inline suppressions** declutter non-critical findings during adoption.
-`# agentgauge: ignore` on a finding's line covers every rule;
-`# agentgauge: ignore[rule-a, rule-b]` only those. A free-text reason may
+`# checkride: ignore` on a finding's line covers every rule;
+`# checkride: ignore[rule-a, rule-b]` only those. A free-text reason may
 follow a bracketed list, or follow a bare `ignore` after `--`, `:` or `#`.
 The site counts as passed. Markers are read from real comment tokens, never
 string literals. A malformed marker (`ignore[]`, `ignore[bad id!]`, `ignore
@@ -456,8 +456,8 @@ is one naming a rule that does not exist.
 written; score and verdict are unaffected.
 
 ```console
-$ agentgauge . --baseline .agentgauge-baseline.json --update-baseline   # record today's state
-$ agentgauge . --baseline .agentgauge-baseline.json                     # CI: fail on new findings
+$ checkride . --baseline .checkride-baseline.json --update-baseline   # record today's state
+$ checkride . --baseline .checkride-baseline.json                     # CI: fail on new findings
 ```
 
 A baseline counts findings per `(file, rule, message)`, so an edit that only
@@ -478,7 +478,7 @@ threshold, tool entry points, out-of-scope sinks, findings with fixes,
 accepted risks; warnings on stderr. Text from the scanned repository is
 rendered with control, C1, bidi-override and zero-width characters escaped.
 
-**`--json`**: agentgauge's own shape. Top-level keys and finding keys
+**`--json`**: checkride's own shape. Top-level keys and finding keys
 (`rule`, `file`, `line`, `column`, `function`, `message`, `fix`,
 `critical`) are pinned by tests; keys may be added, not renamed or removed,
 without a major version. Includes `tool_functions`,
@@ -494,7 +494,7 @@ emitted with SARIF `suppressions`. The invocation lists skipped files and
 warnings.
 
 Paths are relative to the working directory, which is what a code-scanning
-upload resolves; run agentgauge from the repository root.
+upload resolves; run checkride from the repository root.
 
 <a id="performance"></a>
 ## Performance

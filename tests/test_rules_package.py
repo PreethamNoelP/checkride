@@ -1,9 +1,9 @@
 """The rule registry and the rule-id list config validates against must
 never drift apart -- they live in different modules only to avoid a circular
-import (agentgauge.config -> agentgauge.rules -> astutils -> config)."""
+import (checkride.config -> checkride.rules -> astutils -> config)."""
 
-from agentgauge.rules import RULE_IDS
-from agentgauge.scoring import ALL_RULES
+from checkride.rules import RULE_IDS
+from checkride.scoring import ALL_RULES
 
 
 def test_rule_ids_match_the_registry():

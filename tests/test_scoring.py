@@ -1,8 +1,8 @@
 import pytest
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import RuleConfig
-from agentgauge.scoring import ALL_RULES, score_contexts
+from checkride.astutils import FileContext
+from checkride.config import RuleConfig
+from checkride.scoring import ALL_RULES, score_contexts
 
 
 def ctx(src: str, path: str = "mem.py", config: RuleConfig | None = None) -> FileContext:
@@ -97,7 +97,7 @@ def test_clean_scan_with_applicable_sites_is_pass():
 
 def test_zero_applicable_sites_is_incomplete_not_pass():
     # Before: every category scores full marks when it never applied, so a
-    # file agentgauge recognized nothing in scored 100.0/100 and reported
+    # file checkride recognized nothing in scored 100.0/100 and reported
     # PASS -- exit 0 even under `--min-score 100 --fail-on-incomplete`,
     # the strictest invocation there is. The arithmetic was right and the
     # conclusion a CI consumer drew from it was wrong.
@@ -207,7 +207,7 @@ def test_no_disabled_rules_keeps_max_score_at_100():
 
 def test_suppressed_finding_counts_as_passed_and_is_hidden():
     report = score_contexts(
-        [ctx("auto_approve = True  # agentgauge: ignore\n")]
+        [ctx("auto_approve = True  # checkride: ignore\n")]
     )
     assert report.findings == []
     assert report.suppressed == 1
@@ -217,7 +217,7 @@ def test_suppressed_finding_counts_as_passed_and_is_hidden():
 
 def test_suppression_scoped_to_a_different_rule_does_not_apply():
     report = score_contexts(
-        [ctx("auto_approve = True  # agentgauge: ignore[human-oversight]\n")]
+        [ctx("auto_approve = True  # checkride: ignore[human-oversight]\n")]
     )
     assert len(report.findings) == 1
     assert report.findings[0].rule == "permissive-defaults"
@@ -230,7 +230,7 @@ def test_suppressing_a_critical_finding_still_forces_fail_critical():
         [ctx(
             "@mcp.tool()\n"
             "def wipe(path):\n"
-            "    shutil.rmtree(path)  # agentgauge: ignore[human-oversight]\n"
+            "    shutil.rmtree(path)  # checkride: ignore[human-oversight]\n"
         )]
     )
     assert all(f.rule != "human-oversight" for f in report.findings)  # noise gone...
@@ -240,7 +240,7 @@ def test_suppressing_a_critical_finding_still_forces_fail_critical():
 
 def test_suppressing_a_non_critical_finding_does_not_affect_verdict():
     report = score_contexts(
-        [ctx(FULLY_GOVERNED + "auto_approve = True  # agentgauge: ignore\n")]
+        [ctx(FULLY_GOVERNED + "auto_approve = True  # checkride: ignore\n")]
     )
     assert report.critical_suppressed == 0
     assert report.verdict == "PASS"
@@ -253,7 +253,7 @@ def test_malformed_suppression_is_reported_as_a_warning():
         "import shutil\n"
         "@mcp.tool()\n"
         "def wipe(path):\n"
-        "    shutil.rmtree(path)  # agentgauge: ignore[]\n",
+        "    shutil.rmtree(path)  # checkride: ignore[]\n",
         path="mem.py",
     )
     report = score_contexts([ctx])
@@ -265,7 +265,7 @@ def test_malformed_suppression_is_reported_as_a_warning():
 
 def test_unknown_rule_id_in_a_suppression_is_reported_as_a_warning():
     ctx = FileContext.from_source(
-        "auto_approve = True  # agentgauge: ignore[permissive-default]\n",
+        "auto_approve = True  # checkride: ignore[permissive-default]\n",
         path="mem.py",
     )
     report = score_contexts([ctx])
@@ -276,7 +276,7 @@ def test_unknown_rule_id_in_a_suppression_is_reported_as_a_warning():
 
 def test_valid_suppression_produces_no_warning():
     ctx = FileContext.from_source(
-        FULLY_GOVERNED + "auto_approve = True  # agentgauge: ignore[permissive-defaults]\n",
+        FULLY_GOVERNED + "auto_approve = True  # checkride: ignore[permissive-defaults]\n",
         path="mem.py",
     )
     report = score_contexts([ctx])
@@ -386,7 +386,7 @@ def test_no_floor_means_no_fail_score():
 # --- accepted risks ---------------------------------------------------------
 
 def _risk(**kw):
-    from agentgauge.config import AcceptedRisk
+    from checkride.config import AcceptedRisk
 
     base = {"rule": "human-oversight", "file": "mem.py", "reason": "reviewed by the security team"}
     base.update(kw)
