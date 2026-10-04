@@ -7,10 +7,10 @@ passes; each must stay a critical finding.
 
 import pytest
 
-from agentgauge.approval import is_approval_name
-from agentgauge.astutils import FileContext
-from agentgauge.config import RuleConfig
-from agentgauge.rules import oversight
+from checkride.approval import is_approval_name
+from checkride.astutils import FileContext
+from checkride.config import RuleConfig
+from checkride.rules import oversight
 
 
 def judge(body: str, params: str = "path", config: RuleConfig | None = None):

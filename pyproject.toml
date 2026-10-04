@@ -3,7 +3,7 @@ requires = ["setuptools==84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentgauge"
+name = "checkride"
 dynamic = ["version"]
 description = "Find the dangerous things your AI agent can do without asking a human: a static scanner for MCP servers and agent tool code."
 readme = "README.md"
@@ -42,7 +42,7 @@ classifiers = [
 
 [project.optional-dependencies]
 # The scanner itself has no runtime dependencies; this is only for
-# `pip install -e .[dev]` when working on agentgauge. mypy is here because
+# `pip install -e .[dev]` when working on checkride. mypy is here because
 # the package ships py.typed: that marker is a promise to anyone writing a
 # third-party rule, and an unchecked promise is how it silently stops being
 # true. ruff replaces nothing a human was doing reliably by hand.
@@ -53,29 +53,29 @@ classifiers = [
 dev = ["pytest==9.1.1", "mypy==2.4.0", "ruff==0.16.10"]
 
 [project.urls]
-Homepage = "https://github.com/PreethamNoelP/agentgauge"
-Issues = "https://github.com/PreethamNoelP/agentgauge/issues"
-Changelog = "https://github.com/PreethamNoelP/agentgauge/blob/main/CHANGELOG.md"
-Documentation = "https://github.com/PreethamNoelP/agentgauge/blob/main/RULES.md"
-Source = "https://github.com/PreethamNoelP/agentgauge"
-Security = "https://github.com/PreethamNoelP/agentgauge/blob/main/SECURITY.md"
+Homepage = "https://github.com/PreethamNoelP/checkride"
+Issues = "https://github.com/PreethamNoelP/checkride/issues"
+Changelog = "https://github.com/PreethamNoelP/checkride/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/PreethamNoelP/checkride/blob/main/RULES.md"
+Source = "https://github.com/PreethamNoelP/checkride"
+Security = "https://github.com/PreethamNoelP/checkride/blob/main/SECURITY.md"
 
 [project.scripts]
-agentgauge = "agentgauge.cli:main"
+checkride = "checkride.cli:main"
 
 [tool.setuptools]
-packages = ["agentgauge", "agentgauge.rules"]
+packages = ["checkride", "checkride.rules"]
 
 [tool.setuptools.package-data]
-# PEP 561 marker: agentgauge is fully annotated, so a consumer writing a
+# PEP 561 marker: checkride is fully annotated, so a consumer writing a
 # third-party rule against FileContext gets real type checking.
-agentgauge = ["py.typed"]
+checkride = ["py.typed"]
 
 [tool.setuptools.dynamic]
-version = { attr = "agentgauge.__version__" }
+version = { attr = "checkride.__version__" }
 
-[tool.agentgauge]
-# agentgauge scans itself in CI. tests/ and benchmarks/ are excluded: the
+[tool.checkride]
+# checkride scans itself in CI. tests/ and benchmarks/ are excluded: the
 # fixtures and the benchmark corpus are deliberately vulnerable scanner
 # input, gated separately (clean fixture must score 100, vulnerable one
 # must fail, the corpus must match its labels).
@@ -94,7 +94,7 @@ extend-exclude = ["tests/fixtures", "benchmarks/corpus"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-# agentgauge ships a py.typed marker, which promises downstream consumers --
+# checkride ships a py.typed marker, which promises downstream consumers --
 # anyone writing a third-party rule against FileContext -- that these
 # annotations are real. CI enforces that promise instead of just making it.
-files = ["agentgauge"]
+files = ["checkride"]

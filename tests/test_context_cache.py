@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from agentgauge.astutils import (
+from checkride.astutils import (
     FileContext,
     build_import_aliases,
     build_parent_map,

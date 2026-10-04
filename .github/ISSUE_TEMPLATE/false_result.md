@@ -1,13 +1,13 @@
 ---
 name: False positive or false negative
-about: agentgauge flagged safe code, or missed unsafe code
+about: checkride flagged safe code, or missed unsafe code
 labels: detection
 ---
 
 ## Which way round
 
-- [ ] **False positive** — agentgauge flagged code that is properly governed
-- [ ] **False negative** — agentgauge passed code that is not
+- [ ] **False positive** — checkride flagged code that is properly governed
+- [ ] **False negative** — checkride passed code that is not
 
 ## Minimal snippet
 
@@ -18,10 +18,10 @@ happy to see added to the test suite verbatim.
 
 ```
 
-## What agentgauge said
+## What checkride said
 
 ```console
-$ agentgauge snippet.py --json
+$ checkride snippet.py --json
 ```
 
 ## What it should have said, and why
@@ -31,10 +31,10 @@ could see it. For a false negative: which sink or gap was missed.
 
 ## Environment
 
-- `agentgauge --version`:
+- `checkride --version`:
 - Python version:
 - OS:
-- Relevant `[tool.agentgauge]` config, if any:
+- Relevant `[tool.checkride]` config, if any:
 
 ---
 

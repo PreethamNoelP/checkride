@@ -1,4 +1,4 @@
-"""Baseline mode: let an existing repo adopt agentgauge without fixing
+"""Baseline mode: let an existing repo adopt checkride without fixing
 every finding on day one, while keeping the one guarantee this tool
 promises cannot be bought back -- a baseline can never silence a critical
 finding (see ScanReport.verdict in scoring.py for the same guarantee
@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from agentgauge.models import Finding
+from checkride.models import Finding
 
 _SCHEMA_VERSION = 1
 
@@ -63,7 +63,7 @@ def load_baseline(path: Path) -> dict[BaselineKey, int]:
     empty baseline -- the common first-run state, not an error. A present
     but unreadable/malformed one raises BaselineError, the same "silently
     differing from what the author believes" failure mode config.py already
-    refuses to tolerate for [tool.agentgauge]."""
+    refuses to tolerate for [tool.checkride]."""
     if not path.is_file():
         return {}
     try:
@@ -74,7 +74,7 @@ def load_baseline(path: Path) -> dict[BaselineKey, int]:
 
     if not isinstance(data, dict) or data.get("version") != _SCHEMA_VERSION:
         raise BaselineError(
-            f"{path} is not a recognized agentgauge baseline file "
+            f"{path} is not a recognized checkride baseline file "
             f"(expected {{'version': {_SCHEMA_VERSION}, 'findings': [...]}})"
         )
     entries = data.get("findings")

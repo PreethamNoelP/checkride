@@ -1,9 +1,9 @@
 """Deliberately vulnerable MCP server fixture.
 
 Never imported or executed -- only parsed by the scanner. Every one of the
-six agentgauge categories must produce at least one finding here, the file
+six checkride categories must produce at least one finding here, the file
 must score exactly 0.0, and every shape below is one that some version of
-agentgauge (or an obvious implementation of it) scored as clean.
+checkride (or an obvious implementation of it) scored as clean.
 """
 
 import asyncio

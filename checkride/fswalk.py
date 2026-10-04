@@ -1,6 +1,6 @@
 """Shared file-walk primitives: the parts of "which files does a scan
 look at" that don't care whether the file being considered is Python or
-JSON. Split out of scanner.py so agentgauge/configscan.py (the JSON
+JSON. Split out of scanner.py so checkride/configscan.py (the JSON
 config-file scanner) can reuse them without scanner.py and configscan.py
 importing each other -- scanner.py orchestrates both walks and imports
 configscan.py, so configscan.py cannot import scanner.py back.

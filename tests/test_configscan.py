@@ -1,7 +1,7 @@
 import json
 
-from agentgauge import configscan
-from agentgauge.config import RuleConfig
+from checkride import configscan
+from checkride.config import RuleConfig
 
 
 def _write(tmp_path, name, content):

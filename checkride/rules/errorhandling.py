@@ -15,8 +15,8 @@ Two kinds of agent-reachable sites feed this category:
 import ast
 from typing import TypeGuard
 
-from agentgauge.astutils import FileContext, call_name, enclosing_function
-from agentgauge.models import Finding
+from checkride.astutils import FileContext, call_name, enclosing_function
+from checkride.models import Finding
 
 RULE_ID = "error-handling"
 CATEGORY = "Error handling"

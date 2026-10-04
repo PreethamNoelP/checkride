@@ -1,6 +1,6 @@
-from agentgauge.astutils import FileContext
-from agentgauge.config import RuleConfig
-from agentgauge.rules import errorhandling
+from checkride.astutils import FileContext
+from checkride.config import RuleConfig
+from checkride.rules import errorhandling
 
 
 def run(src: str, scope: str = "all"):

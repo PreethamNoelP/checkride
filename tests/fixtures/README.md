@@ -1,19 +1,19 @@
 # Test fixtures — parse-only data, never executed
 
 > **`vulnerable_server.py` is deliberately dangerous code. Do not import it,
-> run it, or copy from it.** It exists so that agentgauge's detection can be
+> run it, or copy from it.** It exists so that checkride's detection can be
 > proven against something realistic.
 
 ## What these files are
 
-Two Python files that agentgauge's test suite and CI **parse** with
+Two Python files that checkride's test suite and CI **parse** with
 `ast.parse`. Nothing here is ever imported, executed, or evaluated — by the
-tests, by CI, or by agentgauge itself, whose entire design forbids executing
+tests, by CI, or by checkride itself, whose entire design forbids executing
 the code it reads.
 
 | File | Must score | Purpose |
 |---|---|---|
-| `vulnerable_server.py` | exactly **0.0 / 100** over 127 sites, verdict `FAIL_CRITICAL` | Every rule must fire. Each tool is a shape some version of agentgauge, or an obvious implementation of it, scored as clean — including every approval bypass (check after the sink, model-supplied `confirm`, authorization, constants, lookalikes) and path traversal through an innocently named parameter. |
+| `vulnerable_server.py` | exactly **0.0 / 100** over 127 sites, verdict `FAIL_CRITICAL` | Every rule must fire. Each tool is a shape some version of checkride, or an obvious implementation of it, scored as clean — including every approval bypass (check after the sink, model-supplied `confirm`, authorization, constants, lookalikes) and path traversal through an innocently named parameter. |
 | `clean_server.py` | exactly **100.0 / 100** over 48 sites, zero findings | The false-positive canary: approval through MCP elicitation, helpers gated and protected at their call sites, input models, low-level dispatch. Legitimate governance patterns must never be flagged. |
 
 Both numbers are asserted in `tests/test_integration.py` and gated in CI, so

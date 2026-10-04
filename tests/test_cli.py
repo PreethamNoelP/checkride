@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from agentgauge import __version__, cli
-from agentgauge.cli import _print_report, main
-from agentgauge.models import CategoryResult, Finding
-from agentgauge.scoring import ScanReport
+from checkride import __version__, cli
+from checkride.cli import _print_report, main
+from checkride.models import CategoryResult, Finding
+from checkride.scoring import ScanReport
 
 # A tool with every control present, so a test can add exactly one problem
 # to it and observe that problem alone.
@@ -154,7 +154,7 @@ def test_json_and_sarif_are_mutually_exclusive(tmp_path, capsys):
 
 
 def test_min_score_from_config_file_gates_without_a_cli_flag(tmp_path, capsys):
-    (tmp_path / "pyproject.toml").write_text("[tool.agentgauge]\nmin_score = 95\n")
+    (tmp_path / "pyproject.toml").write_text("[tool.checkride]\nmin_score = 95\n")
     (tmp_path / "flags.py").write_text("auto_approve = True\n")
 
     code = main([str(tmp_path)])
@@ -163,7 +163,7 @@ def test_min_score_from_config_file_gates_without_a_cli_flag(tmp_path, capsys):
 
 
 def test_cli_min_score_flag_overrides_config_file(tmp_path, capsys):
-    (tmp_path / "pyproject.toml").write_text("[tool.agentgauge]\nmin_score = 95\n")
+    (tmp_path / "pyproject.toml").write_text("[tool.checkride]\nmin_score = 95\n")
     (tmp_path / "flags.py").write_text("auto_approve = True\n")
 
     code = main([str(tmp_path), "--min-score", "50"])
@@ -174,7 +174,7 @@ def test_cli_min_score_flag_overrides_config_file(tmp_path, capsys):
 def test_explicit_config_flag_is_used_instead_of_discovery(tmp_path, capsys):
     (tmp_path / "flags.py").write_text("auto_approve = True\n")
     custom = tmp_path / "custom.toml"
-    custom.write_text("[tool.agentgauge]\nmin_score = 50\n")
+    custom.write_text("[tool.checkride]\nmin_score = 50\n")
 
     code = main([str(tmp_path), "--config", str(custom)])
 
@@ -182,7 +182,7 @@ def test_explicit_config_flag_is_used_instead_of_discovery(tmp_path, capsys):
 
 
 def test_malformed_config_file_returns_two(tmp_path, capsys):
-    (tmp_path / "pyproject.toml").write_text("[tool.agentgauge\nmin_score = 1\n")
+    (tmp_path / "pyproject.toml").write_text("[tool.checkride\nmin_score = 1\n")
     (tmp_path / "flags.py").write_text("auto_approve = True\n")
 
     code = main([str(tmp_path)])
@@ -193,7 +193,7 @@ def test_malformed_config_file_returns_two(tmp_path, capsys):
 
 def test_inline_suppression_is_reflected_in_output(tmp_path, capsys):
     (tmp_path / "flags.py").write_text(
-        "auto_approve = True  # agentgauge: ignore\n"
+        "auto_approve = True  # checkride: ignore\n"
     )
 
     code = main([str(tmp_path)])
@@ -213,7 +213,7 @@ def test_version_flag_prints_the_version(capsys):
 
 
 def test_fail_on_incomplete_turns_a_partial_scan_red(tmp_path, capsys):
-    # A file agentgauge could not parse is a hole in its coverage; a repo
+    # A file checkride could not parse is a hole in its coverage; a repo
     # that wants CI to reflect that can now say so.
     (tmp_path / "ok.py").write_text("x = 1\n")
     (tmp_path / "broken.py").write_text("def broken(:\n")
@@ -230,7 +230,7 @@ def test_fail_on_incomplete_does_not_affect_a_complete_scan(tmp_path):
 
 
 def test_zero_sites_cannot_pass_the_strictest_gate(tmp_path, capsys):
-    # The hole: a repo agentgauge recognized nothing in scored 100.0/100
+    # The hole: a repo checkride recognized nothing in scored 100.0/100
     # and exited 0 under `--min-score 100 --fail-on-incomplete` -- the
     # strictest invocation available. A team reading that green build
     # concluded "governed" when the truthful answer was "not measured".
@@ -258,7 +258,7 @@ def test_zero_sites_in_scope_all_cannot_pass_the_strictest_gate(tmp_path, capsys
 
 def test_excluded_file_count_is_shown_to_the_reader(tmp_path, capsys):
     (tmp_path / "pyproject.toml").write_text(
-        "[tool.agentgauge]\nexclude = ['hidden/*']\n"
+        "[tool.checkride]\nexclude = ['hidden/*']\n"
     )
     (tmp_path / "hidden").mkdir()
     (tmp_path / "hidden" / "server.py").write_text("auto_approve = True\n")
@@ -273,7 +273,7 @@ def test_excluded_file_count_is_shown_to_the_reader(tmp_path, capsys):
 
 def test_disabled_gate_rule_is_warned_about_and_not_a_pass(tmp_path, capsys):
     (tmp_path / "pyproject.toml").write_text(
-        "[tool.agentgauge]\ndisabled_rules = ['human-oversight']\n"
+        "[tool.checkride]\ndisabled_rules = ['human-oversight']\n"
     )
     (tmp_path / "server.py").write_text(GOVERNED.replace(
         "    if not request_approval('wipe', path):\n        return False\n", ""
@@ -288,7 +288,7 @@ def test_disabled_gate_rule_is_warned_about_and_not_a_pass(tmp_path, capsys):
 
 
 def test_config_source_is_reported_so_an_ignored_config_is_visible(tmp_path, capsys):
-    (tmp_path / "pyproject.toml").write_text("[tool.agentgauge]\nmin_score = 1\n")
+    (tmp_path / "pyproject.toml").write_text("[tool.checkride]\nmin_score = 1\n")
     (tmp_path / "server.py").write_text("x = 1\n")
 
     main([str(tmp_path)])
@@ -305,7 +305,7 @@ def test_no_config_source_line_when_no_config_applies(tmp_path, capsys):
 
 
 def test_json_output_carries_the_config_source(tmp_path, capsys):
-    (tmp_path / "pyproject.toml").write_text("[tool.agentgauge]\nmin_score = 1\n")
+    (tmp_path / "pyproject.toml").write_text("[tool.checkride]\nmin_score = 1\n")
     (tmp_path / "server.py").write_text("x = 1\n")
 
     main([str(tmp_path), "--json"])
@@ -383,7 +383,7 @@ def test_bidi_and_c1_characters_in_output_are_defanged(capsys):
 
 
 def test_unknown_config_key_is_a_usage_error(tmp_path, capsys):
-    (tmp_path / "pyproject.toml").write_text("[tool.agentgauge]\nexcludes = ['x']\n")
+    (tmp_path / "pyproject.toml").write_text("[tool.checkride]\nexcludes = ['x']\n")
     (tmp_path / "server.py").write_text("x = 1\n")
 
     code = main([str(tmp_path)])
@@ -417,7 +417,7 @@ def _break_the_pipe(monkeypatch):
 
 
 def test_closed_stdout_pipe_does_not_break_the_exit_code(tmp_path, monkeypatch):
-    # `agentgauge . --json | head -1` closes the pipe mid-write. That is a
+    # `checkride . --json | head -1` closes the pipe mid-write. That is a
     # consumer finishing early, not a scan failure, so the exit code must
     # still reflect the governance result.
     (tmp_path / "bad.py").write_text(
@@ -575,8 +575,8 @@ def test_scope_flag_overrides_config(tmp_path, capsys):
 
 def test_accepted_risks_are_listed_and_can_be_ignored(tmp_path, capsys):
     (tmp_path / "pyproject.toml").write_text(
-        "[tool.agentgauge]\n"
-        "[[tool.agentgauge.accepted_risks]]\n"
+        "[tool.checkride]\n"
+        "[[tool.checkride.accepted_risks]]\n"
         'rule = "human-oversight"\nfile = "s.py"\nfunction = "wipe"\n'
         'reason = "deletes only the scratch dir it created"\n'
     )

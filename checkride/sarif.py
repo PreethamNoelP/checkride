@@ -1,6 +1,6 @@
 """SARIF 2.1.0 rendering: the format GitHub/GitLab code scanning, and most
 enterprise AppSec dashboards, ingest natively. Kept separate from
-ScanReport.to_dict() -- that one is agentgauge's own JSON shape, this one
+ScanReport.to_dict() -- that one is checkride's own JSON shape, this one
 exists to satisfy an external spec.
 
 What a code-scanning consumer gets beyond results:
@@ -17,15 +17,15 @@ https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 import hashlib
 from typing import Any
 
-from agentgauge import __version__
-from agentgauge.models import Finding
-from agentgauge.scoring import ALL_RULES, ScanReport
+from checkride import __version__
+from checkride.models import Finding
+from checkride.scoring import ALL_RULES, ScanReport
 
 SCHEMA_URI = (
     "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/"
     "sarif-schema-2.1.0.json"
 )
-INFORMATION_URI = "https://github.com/PreethamNoelP/agentgauge"
+INFORMATION_URI = "https://github.com/PreethamNoelP/checkride"
 RULES_DOC = f"{INFORMATION_URI}/blob/main/RULES.md"
 
 _RULE_INDEX = {rule.RULE_ID: i for i, rule in enumerate(ALL_RULES)}
@@ -41,7 +41,7 @@ _SECURITY_SEVERITY = {
     "audit-logging": "4.0",
     "rate-limiting": "4.0",
 }
-FINGERPRINT_KEY = "agentgauge/v1"
+FINGERPRINT_KEY = "checkride/v1"
 
 
 def _rule_descriptors() -> list[dict[str, Any]]:
@@ -70,10 +70,10 @@ def _rule_descriptors() -> list[dict[str, Any]]:
 
 
 def _invocation(report: ScanReport, config_source: str | None) -> dict[str, Any]:
-    """The run's invocation record: what agentgauge could not read, so a
+    """The run's invocation record: what checkride could not read, so a
     file skipped for a syntax error does not vanish from the dashboard."""
     invocation: dict[str, Any] = {
-        # True even with notifications present: agentgauge itself ran to
+        # True even with notifications present: checkride itself ran to
         # completion. Per-file failures are reported, not run failures.
         "executionSuccessful": True,
         "toolExecutionNotifications": [
@@ -164,7 +164,7 @@ def build_sarif(
             {
                 "tool": {
                     "driver": {
-                        "name": "agentgauge",
+                        "name": "checkride",
                         # Which build produced a result: without it, a
                         # detection change looks like a code change.
                         "version": __version__,

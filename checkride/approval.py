@@ -39,7 +39,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from functools import lru_cache
 
-from agentgauge.astutils import FunctionNode, call_name, iter_scope
+from checkride.astutils import FunctionNode, call_name, iter_scope
 
 APPROVAL_STEMS = ("approv", "confirm", "consent")
 # Matched against the name with underscores removed, so ask_human,
@@ -66,7 +66,7 @@ def collapse(name: str) -> str:
 def _permissive_flags() -> frozenset[str]:
     # Imported lazily: rules.defaults imports astutils, which this module
     # also imports, and the flag table is defaults' to own.
-    from agentgauge.rules.defaults import DANGEROUS_WHEN_TRUE
+    from checkride.rules.defaults import DANGEROUS_WHEN_TRUE
 
     return DANGEROUS_WHEN_TRUE
 

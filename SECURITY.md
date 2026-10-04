@@ -3,17 +3,17 @@
 ## Reporting a vulnerability
 
 Please report security issues privately via
-[GitHub Security Advisories](https://github.com/PreethamNoelP/agentgauge/security/advisories/new)
+[GitHub Security Advisories](https://github.com/PreethamNoelP/checkride/security/advisories/new)
 rather than a public issue. You should get an acknowledgement within a week.
 
-## What counts as a vulnerability in agentgauge
+## What counts as a vulnerability in checkride
 
-agentgauge is run on untrusted input: its whole job is to scan
+checkride is run on untrusted input: its whole job is to scan
 repositories, including hostile ones, and it is often run in CI with
 repository tokens in the environment. The following are security issues,
 not ordinary bugs:
 
-1. **Code execution.** agentgauge must never execute, import, or evaluate
+1. **Code execution.** checkride must never execute, import, or evaluate
    the code it scans. Any path that does — through a config file, a source
    file, or anything else — is a vulnerability.
 2. **Escaping the scan target.** Reading or writing files outside the paths
@@ -32,7 +32,7 @@ not ordinary bugs:
    a fix or a visible `accepted_risks` entry is a security issue: an inline
    suppression, a baseline, a config key or vocabulary entry (for example
    one that lets a sink count as its own approval), an unreported parse
-   failure, or a way to make agentgauge report a confident `PASS` over code
+   failure, or a way to make checkride report a confident `PASS` over code
    it never examined. `accepted_risks` is the one sanctioned exception, and
    it is printed with its reason in every report.
 
@@ -50,15 +50,15 @@ not ordinary bugs:
 
 ## What does not count
 
-- **A missed finding (false negative).** agentgauge is a documented set of
+- **A missed finding (false negative).** checkride is a documented set of
   heuristics, not a sound analysis. Please still report it, as a normal
   issue — closing detection gaps is the main way this tool improves.
   `RULES.md` lists the known blind spots.
 - **A false positive.** Same: a normal issue, and a valuable one.
-- **A weak governance pattern in code agentgauge scores highly.** The
+- **A weak governance pattern in code checkride scores highly.** The
   score is a signal, not an audit result.
 
-## What agentgauge does with your code
+## What checkride does with your code
 
 Stated precisely, because the whole point of this tool is that you point it
 at code you cannot afford to leak:
@@ -70,7 +70,7 @@ at code you cannot afford to leak:
   filesystem exactly as it was. The one write in the package is
   `--update-baseline PATH`, which writes the baseline file you named. No
   temp files, no cache. (Python itself may write `__pycache__` when it first
-  imports the package; that is the interpreter, not agentgauge.)
+  imports the package; that is the interpreter, not checkride.)
 - **Nothing is executed.** `ast.parse` and `tokenize` only. Scanned code is
   never imported, `eval`'d, `exec`'d, or run as a subprocess.
 - **Nothing outside the target is read.** `.py` files and known MCP client
@@ -82,14 +82,14 @@ at code you cannot afford to leak:
 
 ### The counterpart: what the report contains
 
-agentgauge sends nothing anywhere, but the report it prints is derived from
+checkride sends nothing anywhere, but the report it prints is derived from
 your source. It carries file paths, function and parameter names, resolved
 call names, and the names and boolean values of governance flags. It does
 **not** carry string literals, secret values, or source lines.
 
-So the sensitivity of an agentgauge report is roughly the sensitivity of
+So the sensitivity of an checkride report is roughly the sensitivity of
 your identifier names and file layout. That matters when a report leaves
-your machine by a route agentgauge is not involved in — uploading SARIF to
+your machine by a route checkride is not involved in — uploading SARIF to
 a third-party dashboard, pasting JSON into a public issue, or a CI log.
 Reports also name the config file in use; that path is relative to the
 working directory whenever possible, so logs do not disclose a machine's
@@ -97,7 +97,7 @@ directory layout.
 
 ## Supply chain
 
-agentgauge has no runtime dependencies. The one thing the Action's install
+checkride has no runtime dependencies. The one thing the Action's install
 fetches from PyPI is the build backend (`setuptools`), pinned to an exact
 version in `pyproject.toml`; Dependabot proposes each bump. `pytest` is required only to run
 the test suite. That is deliberate and intended to stay that way: a

@@ -13,11 +13,11 @@ from pathlib import Path
 
 import pytest
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import Config, RuleConfig
-from agentgauge.sarif import build_sarif
-from agentgauge.scanner import scan
-from agentgauge.scoring import ALL_RULES, score_contexts
+from checkride.astutils import FileContext
+from checkride.config import Config, RuleConfig
+from checkride.sarif import build_sarif
+from checkride.scanner import scan
+from checkride.scoring import ALL_RULES, score_contexts
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -63,11 +63,11 @@ CORPUS = [
     "import a.b.c as d",
     "from a import (b as c, d)",
     # suppression comments, valid and not
-    "os.remove(p)  # agentgauge: ignore",
-    "os.remove(p)  # agentgauge: ignore[]",
-    "os.remove(p)  # agentgauge: ignore[human-oversight]",
-    "os.remove(p)  # agentgauge: ignore[not a rule!]",
-    "os.remove(p)  # AGENTGAUGE: IGNORE[HUMAN-OVERSIGHT]",
+    "os.remove(p)  # checkride: ignore",
+    "os.remove(p)  # checkride: ignore[]",
+    "os.remove(p)  # checkride: ignore[human-oversight]",
+    "os.remove(p)  # checkride: ignore[not a rule!]",
+    "os.remove(p)  # CHECKRIDE: IGNORE[HUMAN-OVERSIGHT]",
     "#!/usr/bin/env python\n# -*- coding: utf-8 -*-\nos.remove(p)",
     # flags in awkward positions
     "d = {'auto_approve': True, **rest}",
@@ -238,10 +238,10 @@ def test_verdict_is_always_one_of_the_documented_values(tmp_path):
 @pytest.mark.parametrize(
     "marker",
     [
-        "# agentgauge: ignore",
-        "# agentgauge: ignore[human-oversight]",
-        "# agentgauge: ignore[human-oversight, error-handling]",
-        "# AGENTGAUGE: IGNORE",
+        "# checkride: ignore",
+        "# checkride: ignore[human-oversight]",
+        "# checkride: ignore[human-oversight, error-handling]",
+        "# CHECKRIDE: IGNORE",
     ],
 )
 def test_no_suppression_can_turn_a_critical_sink_into_a_pass(marker):
@@ -266,7 +266,7 @@ ALLOWED_STDLIB_IMPORTS = {
     "tomllib", "typing",
 }
 
-PACKAGE = Path(__file__).parent.parent / "agentgauge"
+PACKAGE = Path(__file__).parent.parent / "checkride"
 
 
 def _package_imports() -> set[str]:
@@ -277,7 +277,7 @@ def _package_imports() -> set[str]:
                 found |= {a.name.split(".")[0] for a in node.names}
             elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
                 found.add(node.module.split(".")[0])
-    return found - {"agentgauge"}
+    return found - {"checkride"}
 
 
 def test_package_imports_nothing_outside_the_documented_stdlib_set():
@@ -329,11 +329,11 @@ def test_package_never_opens_a_file_for_writing():
             )
 
 
-def test_agentgauge_scanning_itself_produces_no_warnings():
+def test_checkride_scanning_itself_produces_no_warnings():
     """The self-scan must be clean, not just high-scoring.
 
     This caught a real wart: the suppression-marker documentation lived in
-    `#` comments, so agentgauge read its own explanation of the syntax as a
+    `#` comments, so checkride read its own explanation of the syntax as a
     malformed directive and warned about it on every run. Correct behavior
     from the rule, embarrassing output from the tool. A scanner whose own
     source trips its own parser has no business lecturing anyone.

@@ -18,9 +18,9 @@ when a gateway limits calls outside the scanned code.
 import ast
 from collections.abc import Iterable, Iterator
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import RuleConfig
-from agentgauge.models import Finding
+from checkride.astutils import FileContext
+from checkride.config import RuleConfig
+from checkride.models import Finding
 
 RULE_ID = "rate-limiting"
 CATEGORY = "Rate limiting"

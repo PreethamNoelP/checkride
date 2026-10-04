@@ -1,4 +1,4 @@
-name: agentgauge
+name: checkride
 description: Static governance scan for MCP servers and AI agent tool-calling code.
 author: Preetham Noel P
 
@@ -14,7 +14,7 @@ inputs:
   min-score:
     description: >-
       The score a PASS needs; below it the verdict is FAIL_SCORE and the
-      step fails. Left empty, [tool.agentgauge] min_score applies, which
+      step fails. Left empty, [tool.checkride] min_score applies, which
       defaults to 70. "0" disables the score floor.
     required: false
     default: ""
@@ -22,7 +22,7 @@ inputs:
     description: >-
       "tools" (default) judges only code reachable from a recognized tool
       entry point; "all" treats every function with a sensitive action as
-      a tool. Left empty, [tool.agentgauge] scope applies.
+      a tool. Left empty, [tool.checkride] scope applies.
     required: false
     default: ""
   fail-on-incomplete:
@@ -47,7 +47,7 @@ inputs:
     description: >-
       Ignore the scanned repository's own pyproject.toml and use the built-in
       defaults. Set this to "true" when the code under scan is not fully
-      trusted -- a pull request from a fork can edit [tool.agentgauge] in the
+      trusted -- a pull request from a fork can edit [tool.checkride] in the
       same change it is judged by, excluding files or accepting risks.
       Cannot be combined with `config`.
     required: false
@@ -56,16 +56,16 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install agentgauge
+    - name: Install checkride
       shell: bash
       # Installed from the action's own checkout ($GITHUB_ACTION_PATH), not
-      # from PyPI or a git URL: the version of agentgauge that runs is exactly
-      # the ref the caller pinned with `uses:`. agentgauge has no runtime
+      # from PyPI or a git URL: the version of checkride that runs is exactly
+      # the ref the caller pinned with `uses:`. checkride has no runtime
       # dependencies; the one thing fetched from PyPI is the build backend,
       # and pyproject.toml pins it to an exact version.
       run: python -m pip install --disable-pip-version-check "$GITHUB_ACTION_PATH"
 
-    - name: Run agentgauge
+    - name: Run checkride
       shell: bash
       env:
         AG_PATH: ${{ inputs.path }}
@@ -108,10 +108,10 @@ runs:
         if [ -n "$AG_SARIF" ]; then
           mkdir -p "$(dirname "$AG_SARIF")"
           # Redirect, never a pipe: `run:` executes under `bash -e`, so a
-          # pipeline would abort the step on agentgauge's own non-zero
+          # pipeline would abort the step on checkride's own non-zero
           # governance exit before the code could be inspected.
-          agentgauge "${args[@]}" --sarif -- "$AG_PATH" > "$AG_SARIF" && code=0 || code=$?
+          checkride "${args[@]}" --sarif -- "$AG_PATH" > "$AG_SARIF" && code=0 || code=$?
         else
-          agentgauge "${args[@]}" -- "$AG_PATH" && code=0 || code=$?
+          checkride "${args[@]}" -- "$AG_PATH" && code=0 || code=$?
         fi
         exit "$code"

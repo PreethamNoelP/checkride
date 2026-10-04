@@ -3,9 +3,9 @@ across files through the scanner."""
 
 import pytest
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import Config, RuleConfig
-from agentgauge.scanner import scan
+from checkride.astutils import FileContext
+from checkride.config import Config, RuleConfig
+from checkride.scanner import scan
 
 
 def tools(src: str, config: RuleConfig | None = None) -> set[str]:

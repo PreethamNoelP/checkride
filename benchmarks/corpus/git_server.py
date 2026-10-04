@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 def git_status() -> str:
     log.info("status")
     try:
-        # A fixed, read-only command needs no human; agentgauge treats every
+        # A fixed, read-only command needs no human; checkride treats every
         # subprocess call as shell execution.
         return subprocess.run(  # known-fp: human-oversight
             ["git", "status", "--short"], capture_output=True, text=True, check=True

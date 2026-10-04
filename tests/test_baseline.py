@@ -2,14 +2,14 @@ import json
 
 import pytest
 
-from agentgauge.baseline import (
+from checkride.baseline import (
     BaselineError,
     BaselineKey,
     diff_against_baseline,
     load_baseline,
     write_baseline,
 )
-from agentgauge.models import Finding
+from checkride.models import Finding
 
 
 def finding(file="a.py", rule="error-handling", message="msg", line=1, critical=False):

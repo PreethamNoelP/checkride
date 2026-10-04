@@ -1,4 +1,4 @@
-"""The `agentgauge: ignore` marker grammar.
+"""The `checkride: ignore` marker grammar.
 
 The comment introducer is a parameter (`marker_pattern`); everything after
 it -- the optional bracketed rule list, the reason delimiter, the rule-id
@@ -17,7 +17,7 @@ from dataclasses import dataclass
 # group captures anything up to "]" rather than only well-formed rule ids,
 # so an invalid list stays invalid instead of falling back to the bare form.
 # The \b stops "ignored"/"ignoring" in prose from reading as a directive.
-_BODY = r"\s*agentgauge:\s*ignore\b[ \t]*(\[[^\]]*\])?[ \t]*(.*)$"
+_BODY = r"\s*checkride:\s*ignore\b[ \t]*(\[[^\]]*\])?[ \t]*(.*)$"
 
 # A free-text reason may follow a bare `ignore`, but it has to announce
 # itself. Forgetting the brackets around a rule name must not suppress
@@ -28,7 +28,7 @@ _REASON_RE = re.compile(r"^(--|:|#)")
 # suppression list is a typo, not a rule we might not know about yet.
 _RULE_ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 
-_MARKER_WORD_RE = re.compile(r"agentgauge", re.IGNORECASE)
+_MARKER_WORD_RE = re.compile(r"checkride", re.IGNORECASE)
 
 
 @dataclass(frozen=True)

@@ -11,13 +11,13 @@ Approval derived from a tool's own parameters does not count: the model
 chooses those values.
 """
 
-from agentgauge.astutils import (
+from checkride.astutils import (
     FileContext,
     call_name,
     enclosing_function,
     is_critical,
 )
-from agentgauge.models import Finding
+from checkride.models import Finding
 
 RULE_ID = "human-oversight"
 CATEGORY = "Human oversight"

@@ -1,4 +1,4 @@
-"""Optional project configuration: `[tool.agentgauge]` in pyproject.toml.
+"""Optional project configuration: `[tool.checkride]` in pyproject.toml.
 
 A scan with no config file behaves identically to one with an empty table.
 Validation is strict: an unknown key, an unknown rule id, a malformed value,
@@ -18,9 +18,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agentgauge.rules import RULE_IDS
+from checkride.rules import RULE_IDS
 
-# Recognized [tool.agentgauge] keys that extend a rule's built-in vocabulary,
+# Recognized [tool.checkride] keys that extend a rule's built-in vocabulary,
 # additively -- a config can only add markers, never remove the defaults
 # documented in RULES.md.
 _VOCAB_KEYS = {
@@ -35,7 +35,7 @@ _VOCAB_KEYS = {
 
 _TUPLE_FIELDS = {"approval_markers", "rate_markers"}
 
-# Every key [tool.agentgauge] understands. An unrecognized key is an error,
+# Every key [tool.checkride] understands. An unrecognized key is an error,
 # not a no-op: "excludes = [...]" or "min_scores = 90" would otherwise scan
 # with silently different settings than the author believed they had asked
 # for, which for a governance gate is the worst possible failure mode.
@@ -110,7 +110,7 @@ class RuleConfig:
 
 @dataclass(frozen=True)
 class Config:
-    """Everything loaded from [tool.agentgauge]."""
+    """Everything loaded from [tool.checkride]."""
 
     min_score: float | None = DEFAULT_MIN_SCORE
     exclude: tuple[str, ...] = ()
@@ -122,7 +122,7 @@ class Config:
     rules: RuleConfig = field(default_factory=RuleConfig)
     accepted_risks: tuple[AcceptedRisk, ...] = ()
     # The file these settings came from, or None when no config was found.
-    # Reported by the CLI: "my [tool.agentgauge] table was ignored" is
+    # Reported by the CLI: "my [tool.checkride] table was ignored" is
     # otherwise invisible, and discovery deliberately does not search
     # upwards (see _discover_path). Named by display_path, so it never
     # carries an absolute path into a CI log.
@@ -131,7 +131,7 @@ class Config:
 
 def _as_str_tuple(value: object, key: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
-        raise ConfigError(f"[tool.agentgauge] '{key}' must be a list of strings")
+        raise ConfigError(f"[tool.checkride] '{key}' must be a list of strings")
     return tuple(value)
 
 
@@ -144,7 +144,7 @@ def _as_vocabulary(value: object, key: str) -> tuple[str, ...]:
         stripped = entry.strip()
         if len(stripped) < _MIN_VOCAB_LENGTH:
             raise ConfigError(
-                f"[tool.agentgauge] '{key}' entry {entry!r} is shorter than "
+                f"[tool.checkride] '{key}' entry {entry!r} is shorter than "
                 f"{_MIN_VOCAB_LENGTH} characters -- it would match almost every "
                 "identifier and effectively disable the rule"
             )
@@ -155,13 +155,13 @@ def _check_marker_is_not_a_sink(entry: str) -> None:
     """An approval marker that also matches a sensitive call's own name
     would let that call approve itself: extra_approval_markers = ["run"]
     makes every subprocess.run its own approval."""
-    from agentgauge.astutils import SENSITIVE_EXACT, SENSITIVE_SUFFIX
+    from checkride.astutils import SENSITIVE_EXACT, SENSITIVE_SUFFIX
 
     needle = entry.lower().replace("_", "")
     for sink in (*SENSITIVE_EXACT, *SENSITIVE_SUFFIX):
         if needle in sink.lower().replace("_", "").replace(".", ""):
             raise ConfigError(
-                f"[tool.agentgauge] 'extra_approval_markers' entry {entry!r} "
+                f"[tool.checkride] 'extra_approval_markers' entry {entry!r} "
                 f"also matches the sensitive call '{sink}', which would then "
                 "count as its own approval"
             )
@@ -170,12 +170,12 @@ def _check_marker_is_not_a_sink(entry: str) -> None:
 def _as_accepted_risks(value: object) -> tuple[AcceptedRisk, ...]:
     if not isinstance(value, list) or not all(isinstance(v, dict) for v in value):
         raise ConfigError(
-            "[tool.agentgauge] 'accepted_risks' must be an array of tables "
-            "([[tool.agentgauge.accepted_risks]])"
+            "[tool.checkride] 'accepted_risks' must be an array of tables "
+            "([[tool.checkride.accepted_risks]])"
         )
     risks = []
     for i, entry in enumerate(value):
-        where = f"[tool.agentgauge] accepted_risks[{i}]"
+        where = f"[tool.checkride] accepted_risks[{i}]"
         unknown = sorted(set(entry) - _ACCEPTED_RISK_KEYS)
         if unknown:
             raise ConfigError(
@@ -217,7 +217,7 @@ def _build_rule_config(table: dict[str, Any]) -> RuleConfig:
     unknown = sorted(set(disabled) - set(RULE_IDS))
     if unknown:
         raise ConfigError(
-            f"[tool.agentgauge] 'disabled_rules' names unknown rule(s) "
+            f"[tool.checkride] 'disabled_rules' names unknown rule(s) "
             f"{', '.join(repr(u) for u in unknown)}; valid ids are "
             f"{', '.join(RULE_IDS)}"
         )
@@ -226,14 +226,14 @@ def _build_rule_config(table: dict[str, Any]) -> RuleConfig:
     assume_external = table.get("assume_external_rate_limiting", False)
     if not isinstance(assume_external, bool):
         raise ConfigError(
-            "[tool.agentgauge] 'assume_external_rate_limiting' must be true/false"
+            "[tool.checkride] 'assume_external_rate_limiting' must be true/false"
         )
     kwargs["assume_external_rate_limiting"] = assume_external
 
     scope = table.get("scope", "tools")
     if scope not in SCOPES:
         raise ConfigError(
-            f"[tool.agentgauge] 'scope' must be one of {', '.join(map(repr, SCOPES))}"
+            f"[tool.checkride] 'scope' must be one of {', '.join(map(repr, SCOPES))}"
         )
     kwargs["scope"] = scope
     kwargs["tool_decorators"] = frozenset(
@@ -260,18 +260,18 @@ def _build_rule_config(table: dict[str, Any]) -> RuleConfig:
 
 def _parse(data: dict[str, Any], source: str | None = None) -> Config:
     tool = data.get("tool", {})
-    table = tool.get("agentgauge", {}) if isinstance(tool, dict) else {}
+    table = tool.get("checkride", {}) if isinstance(tool, dict) else {}
     if not isinstance(table, dict):
-        raise ConfigError("[tool.agentgauge] must be a table")
-    if not isinstance(tool, dict) or "agentgauge" not in tool:
-        # A pyproject.toml with no [tool.agentgauge] table contributed
+        raise ConfigError("[tool.checkride] must be a table")
+    if not isinstance(tool, dict) or "checkride" not in tool:
+        # A pyproject.toml with no [tool.checkride] table contributed
         # nothing, so naming it as the config source would be misleading.
         source = None
 
     unknown = sorted(set(table) - _KNOWN_KEYS)
     if unknown:
         raise ConfigError(
-            f"[tool.agentgauge] unknown key(s) "
+            f"[tool.checkride] unknown key(s) "
             f"{', '.join(repr(u) for u in unknown)}; valid keys are "
             f"{', '.join(sorted(_KNOWN_KEYS))}"
         )
@@ -280,9 +280,9 @@ def _parse(data: dict[str, Any], source: str | None = None) -> Config:
     # bool is a subclass of int in Python, so `min_score = true` would
     # otherwise silently become a threshold of 1.0.
     if isinstance(min_score, bool) or not isinstance(min_score, (int, float)):
-        raise ConfigError("[tool.agentgauge] 'min_score' must be a number")
+        raise ConfigError("[tool.checkride] 'min_score' must be a number")
     if not 0 <= min_score <= 100:
-        raise ConfigError("[tool.agentgauge] 'min_score' must be between 0 and 100")
+        raise ConfigError("[tool.checkride] 'min_score' must be between 0 and 100")
 
     exclude = _as_str_tuple(table.get("exclude", []), "exclude")
     extra_config_filenames = frozenset(
@@ -330,7 +330,7 @@ def display_path(path: Path) -> str:
 
 
 def load_config(target: Path, explicit_path: Path | None = None) -> Config:
-    """Load [tool.agentgauge] from an explicit path or by discovery next to
+    """Load [tool.checkride] from an explicit path or by discovery next to
     `target`. Returns the all-defaults Config if nothing is found -- a
     missing config file is not an error, a malformed one is."""
     path = explicit_path if explicit_path is not None else _discover_path(target)

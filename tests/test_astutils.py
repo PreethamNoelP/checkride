@@ -2,7 +2,7 @@ import ast
 
 import pytest
 
-from agentgauge.astutils import (
+from checkride.astutils import (
     FileContext,
     build_import_aliases,
     build_parent_map,
@@ -200,7 +200,7 @@ def test_iter_sensitive_calls_accepts_aliases():
 
 def test_is_suppressed_for_unqualified_ignore_comment():
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignore\n", path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 1) is True
     assert ctx.is_suppressed("error-handling", 1) is True
@@ -208,7 +208,7 @@ def test_is_suppressed_for_unqualified_ignore_comment():
 
 def test_is_suppressed_for_rule_scoped_ignore_comment():
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore[human-oversight]\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignore[human-oversight]\n", path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 1) is True
     assert ctx.is_suppressed("error-handling", 1) is False
@@ -216,7 +216,7 @@ def test_is_suppressed_for_rule_scoped_ignore_comment():
 
 def test_is_suppressed_for_multiple_rule_scoped_ignore_comment():
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore[human-oversight, error-handling]\n",
+        "shutil.rmtree(path)  # checkride: ignore[human-oversight, error-handling]\n",
         path="mem.py",
     )
     assert ctx.is_suppressed("human-oversight", 1) is True
@@ -233,7 +233,7 @@ def test_suppression_marker_in_a_string_literal_is_not_a_comment():
     # Only real COMMENT tokens count -- a string that happens to contain the
     # marker text must not accidentally suppress anything.
     ctx = FileContext.from_source(
-        'msg = "# agentgauge: ignore"\nshutil.rmtree(path)\n', path="mem.py"
+        'msg = "# checkride: ignore"\nshutil.rmtree(path)\n', path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 2) is False
 
@@ -343,7 +343,7 @@ def test_empty_bracket_suppression_is_malformed_and_suppresses_nothing():
     # match the bracketed form, fell back to bare "ignore", and suppressed
     # every rule on the line instead.
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore[]\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignore[]\n", path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 1) is False
     assert len(ctx.malformed_suppressions) == 1
@@ -352,7 +352,7 @@ def test_empty_bracket_suppression_is_malformed_and_suppresses_nothing():
 
 def test_invalid_rule_id_in_brackets_is_malformed_not_blanket():
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore[human oversight!]\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignore[human oversight!]\n", path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 1) is False
     assert ctx.is_suppressed("error-handling", 1) is False
@@ -361,7 +361,7 @@ def test_invalid_rule_id_in_brackets_is_malformed_not_blanket():
 
 def test_ignore_inside_a_longer_word_is_not_a_marker():
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignored this in review\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignored this in review\n", path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 1) is False
     assert ctx.malformed_suppressions == []
@@ -371,7 +371,7 @@ def test_unknown_but_well_formed_rule_id_suppresses_nothing_real():
     # Well-formed shape, so not "malformed" -- but it names no real rule,
     # which the scoring pass reports as an ineffective suppression.
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore[oversight]\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignore[oversight]\n", path="mem.py"
     )
     assert ctx.is_suppressed("human-oversight", 1) is False
     assert ctx.suppressions[1] == frozenset({"oversight"})
@@ -380,7 +380,7 @@ def test_unknown_but_well_formed_rule_id_suppresses_nothing_real():
 
 def test_trailing_reason_after_a_rule_list_still_parses():
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore[human-oversight] gateway gates this\n",
+        "shutil.rmtree(path)  # checkride: ignore[human-oversight] gateway gates this\n",
         path="mem.py",
     )
     assert ctx.is_suppressed("human-oversight", 1) is True
@@ -433,12 +433,12 @@ def test_multi_target_assignment_is_not_an_alias():
 
 
 def test_bare_ignore_followed_by_prose_is_malformed():
-    # "# agentgauge: ignore rate-limiting" -- brackets forgotten -- used to
+    # "# checkride: ignore rate-limiting" -- brackets forgotten -- used to
     # suppress EVERY rule on the line, including rules added in later
     # versions. The narrowest reading of a directive we cannot parse is
     # that no exemption was granted.
     ctx = FileContext.from_source(
-        "shutil.rmtree(path)  # agentgauge: ignore rate-limiting\n", path="mem.py"
+        "shutil.rmtree(path)  # checkride: ignore rate-limiting\n", path="mem.py"
     )
     assert ctx.is_suppressed("rate-limiting", 1) is False
     assert ctx.is_suppressed("human-oversight", 1) is False
@@ -447,10 +447,10 @@ def test_bare_ignore_followed_by_prose_is_malformed():
 
 def test_bare_ignore_with_a_delimited_reason_still_suppresses():
     for comment in (
-        "# agentgauge: ignore -- the gateway gates this",
-        "# agentgauge: ignore: gateway",
-        "# agentgauge: ignore # gateway",
-        "# agentgauge: ignore",
+        "# checkride: ignore -- the gateway gates this",
+        "# checkride: ignore: gateway",
+        "# checkride: ignore # gateway",
+        "# checkride: ignore",
     ):
         ctx = FileContext.from_source(f"auto_approve = True  {comment}\n", path="m.py")
         assert ctx.is_suppressed("permissive-defaults", 1) is True, comment
@@ -459,7 +459,7 @@ def test_bare_ignore_with_a_delimited_reason_still_suppresses():
 
 def test_ignore_all_is_not_a_directive():
     ctx = FileContext.from_source(
-        "auto_approve = True  # agentgauge: ignore-all\n", path="mem.py"
+        "auto_approve = True  # checkride: ignore-all\n", path="mem.py"
     )
     assert ctx.is_suppressed("permissive-defaults", 1) is False
     assert ctx.malformed_suppressions

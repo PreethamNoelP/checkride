@@ -1,8 +1,8 @@
 import pytest
 
-from agentgauge.astutils import FileContext
-from agentgauge.config import RuleConfig
-from agentgauge.rules import defaults
+from checkride.astutils import FileContext
+from checkride.config import RuleConfig
+from checkride.rules import defaults
 
 
 def run(src: str, config: RuleConfig | None = None):

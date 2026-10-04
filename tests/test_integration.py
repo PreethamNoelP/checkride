@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from agentgauge.scanner import scan
+from checkride.scanner import scan
 
 FIXTURES = Path(__file__).parent / "fixtures"
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -42,7 +42,7 @@ def test_python_dash_m_entrypoint_end_to_end():
     # A real subprocess proves the __main__ wiring and exit-code
     # propagation that in-process main() calls cannot.
     proc = subprocess.run(
-        [sys.executable, "-m", "agentgauge", str(FIXTURES / "clean_server.py")],
+        [sys.executable, "-m", "checkride", str(FIXTURES / "clean_server.py")],
         capture_output=True,
         check=False,
         text=True,
@@ -55,7 +55,7 @@ def test_python_dash_m_entrypoint_end_to_end():
 def test_min_score_gate_end_to_end():
     proc = subprocess.run(
         [
-            sys.executable, "-m", "agentgauge",
+            sys.executable, "-m", "checkride",
             str(FIXTURES / "vulnerable_server.py"),
             "--min-score", "70",
         ],
@@ -71,7 +71,7 @@ def test_critical_verdict_fails_end_to_end_without_min_score():
     # No --min-score at all: a live critical finding must still fail the
     # build (critical-site dilution) rather than defaulting to a pass.
     proc = subprocess.run(
-        [sys.executable, "-m", "agentgauge", str(FIXTURES / "vulnerable_server.py")],
+        [sys.executable, "-m", "checkride", str(FIXTURES / "vulnerable_server.py")],
         capture_output=True,
         check=False,
         text=True,
@@ -82,7 +82,7 @@ def test_critical_verdict_fails_end_to_end_without_min_score():
 
 
 def test_vulnerable_fixture_covers_every_detection_shape():
-    # Each tool below is a shape some version of agentgauge, or an obvious
+    # Each tool below is a shape some version of checkride, or an obvious
     # implementation of it, scored as clean. Pinning each one by name means
     # a regression names what broke instead of just moving a number.
     report = scan(FIXTURES / "vulnerable_server.py")

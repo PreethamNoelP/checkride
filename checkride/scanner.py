@@ -14,12 +14,12 @@ import tokenize
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
-from agentgauge import callgraph, configscan
-from agentgauge.astutils import FileContext
-from agentgauge.config import Config
-from agentgauge.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded
-from agentgauge.rules import defaults
-from agentgauge.scoring import ScanReport, score_contexts
+from checkride import callgraph, configscan
+from checkride.astutils import FileContext
+from checkride.config import Config
+from checkride.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded
+from checkride.rules import defaults
+from checkride.scoring import ScanReport, score_contexts
 
 __all__ = [
     "MAX_FILE_BYTES",
@@ -97,7 +97,7 @@ def escapes_scan_root(path: Path, root: Path) -> bool:
 
     Scanned repositories are untrusted. A file named `config.py` that is
     really a link to ~/.aws/credentials would otherwise be read and parsed,
-    and while agentgauge never executes what it reads and never reports
+    and while checkride never executes what it reads and never reports
     string values, identifier names from a file outside the tree could
     surface in the report under an in-tree path. Refusing to follow the link
     removes the question.
@@ -129,12 +129,12 @@ def escapes_scan_root(path: Path, root: Path) -> bool:
 
 
 def _display_path(path: Path, root: Path, cwd: Path) -> str:
-    """The path agentgauge reports for a finding.
+    """The path checkride reports for a finding.
 
     Relative to the current working directory whenever the file is under
     it, because that is the path a developer can click and -- more
     importantly -- the path GitHub/GitLab code scanning resolves a SARIF
-    result against. Reporting root-relative paths meant `agentgauge src/`
+    result against. Reporting root-relative paths meant `checkride src/`
     emitted "server.py" for src/server.py, which no code-scanning
     dashboard can map back to a file in the repository.
 
@@ -366,7 +366,7 @@ def scan(target: str | Path, config: Config | None = None) -> ScanReport:
         if hidden:
             shown = ", ".join(hidden[:5]) + (", ..." if len(hidden) > 5 else "")
             report.warnings.append(
-                f"{len(hidden)} excluded file(s) contain calls agentgauge "
+                f"{len(hidden)} excluded file(s) contain calls checkride "
                 f"treats as sensitive actions and were not judged: {shown}. "
                 "If you do not control this repository, rerun with --no-config"
             )

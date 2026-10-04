@@ -10,7 +10,7 @@ that a return to quadratic behavior fails by a wide margin.
 import time
 from pathlib import Path
 
-from agentgauge.scanner import scan
+from checkride.scanner import scan
 
 LIMIT_SECONDS = 20
 

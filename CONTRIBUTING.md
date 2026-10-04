@@ -1,4 +1,4 @@
-# Contributing to agentgauge
+# Contributing to checkride
 
 Contributions are welcome — especially new rules, vocabulary additions, and
 reports of false positives or false negatives.
@@ -6,12 +6,12 @@ reports of false positives or false negatives.
 ## Setup
 
 ```console
-$ git clone https://github.com/PreethamNoelP/agentgauge.git
-$ cd agentgauge
+$ git clone https://github.com/PreethamNoelP/checkride.git
+$ cd checkride
 $ pip install -e ".[dev]"
 $ python -m pytest tests/ -q
 $ mypy                            # --strict, configured in pyproject.toml
-$ ruff check agentgauge/ tests/
+$ ruff check checkride/ tests/
 ```
 
 Python 3.11+ and no other runtime dependency. `mypy` and `ruff` are
@@ -44,7 +44,7 @@ static scan can prove is the fastest way to make this tool useless.
 
 ## Adding a rule
 
-A rule is one module in `agentgauge/rules/` exposing four names:
+A rule is one module in `checkride/rules/` exposing four names:
 
 ```python
 RULE_ID = "my-rule"      # lowercase kebab-case; suppressions name it
@@ -57,8 +57,8 @@ def check(ctx: FileContext) -> tuple[int, int, list[Finding]]:
 
 Then:
 
-1. Register it in `ALL_RULES` in `agentgauge/scoring.py`.
-2. Add its id to `RULE_IDS` in `agentgauge/rules/__init__.py`
+1. Register it in `ALL_RULES` in `checkride/scoring.py`.
+2. Add its id to `RULE_IDS` in `checkride/rules/__init__.py`
    (`test_rules_package.py` fails if you forget).
 3. Rebalance `WEIGHT`s so they still total 100 — also checked by
    `test_rules_package.py`. Changing weights changes every user's score,
@@ -95,7 +95,7 @@ Invariants your rule must keep, because scoring relies on them:
 
 ## Vocabulary
 
-Sink tables live in `agentgauge/astutils.py`. `SENSITIVE_EXACT` requires a
+Sink tables live in `checkride/astutils.py`. `SENSITIVE_EXACT` requires a
 full dotted name; `SENSITIVE_SUFFIX` matches a method name on *any*
 receiver, so an entry there must be distinctive enough that a false
 positive is implausible (`rmtree`, `delete_bucket`, `transfer_funds` — not
@@ -105,13 +105,13 @@ finding does.
 
 ## The benchmark
 
-`python benchmarks/run.py` must pass. It fails whenever agentgauge's output
+`python benchmarks/run.py` must pass. It fails whenever checkride's output
 differs from the corpus labels, in either direction, so:
 
 - **A detection change** that adds or removes findings needs the matching
   label change in the same commit: `expect` for a real issue now caught,
   remove a `known-fp` that is now fixed, turn a `known-miss` into `expect`.
-- **Labels state what a reviewer would conclude**, never what agentgauge
+- **Labels state what a reviewer would conclude**, never what checkride
   currently does. If the tool is wrong, the label is `known-fp` or
   `known-miss` and the case stays in the numbers.
 - **A reported false positive or negative** is best turned into a corpus
@@ -121,10 +121,10 @@ See [benchmarks/README.md](benchmarks/README.md).
 
 ## Releasing
 
-1. Bump `__version__` in `agentgauge/__init__.py` and date the version's
+1. Bump `__version__` in `checkride/__init__.py` and date the version's
    section in `CHANGELOG.md`.
 2. Update the version in the README's Action and pre-commit examples.
-3. Merge to `main`, then tag: `git tag -a vX.Y.Z -m "agentgauge X.Y.Z"` and
+3. Merge to `main`, then tag: `git tag -a vX.Y.Z -m "checkride X.Y.Z"` and
    `git push origin vX.Y.Z`.
 4. Publish a GitHub Release for the tag. `.github/workflows/release.yml`
    checks the tag matches the package version, runs the tests and the
@@ -134,7 +134,7 @@ See [benchmarks/README.md](benchmarks/README.md).
 ## Pull requests
 
 - Branch from `main`, one logical change per commit.
-- `python -m pytest tests/ -q`, `mypy`, `ruff check agentgauge/ tests/
+- `python -m pytest tests/ -q`, `mypy`, `ruff check checkride/ tests/
   benchmarks/` and `python benchmarks/run.py` green, and CI green on every
   matrix entry —
   including Windows, where path handling and glob case sensitivity have

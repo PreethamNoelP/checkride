@@ -1,6 +1,6 @@
 """Hard cases. Every tool here validates its obvious input and handles its
 errors; each remaining issue is labelled with what a reviewer would say,
-including the ones agentgauge still gets wrong. Choosing which function to
+including the ones checkride still gets wrong. Choosing which function to
 run (`action`, `which`) is itself an unvalidated input: the model can pick
 os.system."""
 # expect-verdict: FAIL_CRITICAL
@@ -71,7 +71,7 @@ def gated_by_middleware(path: str) -> str:
 
 def policy_checked(func):
     """A project decorator with no approval word in its name: its wrapper
-    asks before calling the tool, and that is what agentgauge reads."""
+    asks before calling the tool, and that is what checkride reads."""
     def wrapper(*args, **kwargs):
         if not request_approval(func.__name__, args):
             raise PermissionError("denied by policy")

@@ -1,7 +1,7 @@
-from agentgauge import __version__
-from agentgauge.astutils import FileContext
-from agentgauge.sarif import build_sarif
-from agentgauge.scoring import ALL_RULES, score_contexts
+from checkride import __version__
+from checkride.astutils import FileContext
+from checkride.sarif import build_sarif
+from checkride.scoring import ALL_RULES, score_contexts
 
 
 def ctx(src: str, path: str = "mem.py") -> FileContext:
@@ -81,7 +81,7 @@ def test_sarif_version_and_schema_are_2_1_0():
 
 def test_sarif_reports_the_tool_version():
     # Without a driver version, a dashboard cannot tell a detection change
-    # in agentgauge apart from a change in the scanned code.
+    # in checkride apart from a change in the scanned code.
     sarif = build_sarif(score_contexts([ctx("x = 1\n")]))
     driver = sarif["runs"][0]["tool"]["driver"]
     assert driver["version"] == __version__
@@ -139,9 +139,9 @@ def _results(src: str, **kw):
 
 
 def test_fingerprints_survive_an_unrelated_edit_above_the_finding():
-    before = {r["partialFingerprints"]["agentgauge/v1"] for r in _results(WIPE)}
+    before = {r["partialFingerprints"]["checkride/v1"] for r in _results(WIPE)}
     after = {
-        r["partialFingerprints"]["agentgauge/v1"]
+        r["partialFingerprints"]["checkride/v1"]
         for r in _results("# a new comment\n\n" + WIPE)
     }
     assert before and before == after
@@ -154,7 +154,7 @@ def test_identical_findings_get_distinct_fingerprints():
         "    while True:\n        pass\n"
     )
     prints = [
-        r["partialFingerprints"]["agentgauge/v1"]
+        r["partialFingerprints"]["checkride/v1"]
         for r in _results(src) if "while True" in r["message"]["text"]
     ]
     assert len(prints) == 2 and len(set(prints)) == 2
@@ -177,14 +177,14 @@ def test_rule_descriptors_carry_help_links_and_security_severity():
 
 
 def test_inline_suppressions_are_recorded_not_dropped():
-    src = WIPE.replace("shutil.rmtree(path)", "shutil.rmtree(path)  # agentgauge: ignore[error-handling]")
+    src = WIPE.replace("shutil.rmtree(path)", "shutil.rmtree(path)  # checkride: ignore[error-handling]")
     suppressed = [r for r in _results(src) if "suppressions" in r]
     assert [r["ruleId"] for r in suppressed] == ["error-handling"]
     assert suppressed[0]["suppressions"][0]["kind"] == "inSource"
 
 
 def test_accepted_risks_are_external_suppressions_with_their_reason():
-    from agentgauge.config import AcceptedRisk
+    from checkride.config import AcceptedRisk
 
     risk = AcceptedRisk(rule="human-oversight", file="mem.py", reason="reviewed in SEC-123")
     accepted = [r for r in _results(WIPE, accepted_risks=(risk,)) if "suppressions" in r]

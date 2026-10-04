@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-import agentgauge.scanner as scanner_module
-from agentgauge.astutils import FileContext
-from agentgauge.config import Config, RuleConfig
-from agentgauge.scanner import escapes_scan_root, iter_python_files, scan
+import checkride.scanner as scanner_module
+from checkride.astutils import FileContext
+from checkride.config import Config, RuleConfig
+from checkride.scanner import escapes_scan_root, iter_python_files, scan
 
 
 def test_scan_walks_directory_and_skips_junk_dirs(tmp_path):
@@ -237,7 +237,7 @@ def test_oversized_file_is_skipped_rather_than_parsed(tmp_path, monkeypatch):
 def test_findings_are_reported_relative_to_the_working_directory(tmp_path, monkeypatch):
     # SARIF results and clickable terminal output both need a path that
     # resolves from where the tool was invoked. A root-relative path meant
-    # `agentgauge src/` reported "server.py" for src/server.py.
+    # `checkride src/` reported "server.py" for src/server.py.
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "server.py").write_text("auto_approve = True\n")
     monkeypatch.chdir(tmp_path)
@@ -362,7 +362,7 @@ def test_broken_symlink_is_refused_not_fatal(tmp_path):
 
 def test_explicitly_named_symlink_target_is_still_scanned(tmp_path):
     # Exclude patterns don't overrule an explicit target, and neither does
-    # this: pointing agentgauge at a link is the caller's own decision.
+    # this: pointing checkride at a link is the caller's own decision.
     if not _can_symlink(tmp_path):
         pytest.skip("this platform does not allow creating symlinks")
 
