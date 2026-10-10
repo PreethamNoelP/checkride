@@ -2,7 +2,7 @@
 #
 #   repos:
 #     - repo: https://github.com/PreethamNoelP/checkride
-#       rev: v0.5.0
+#       rev: v0.5.1
 #       hooks:
 #         - id: checkride
 #           args: [--fail-on-incomplete]

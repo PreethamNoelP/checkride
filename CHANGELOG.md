@@ -9,7 +9,7 @@ scanner, "breaking" includes anything that can change a repository's score
 or verdict, since that is what CI gates on — those are called out
 explicitly.
 
-## [Unreleased]
+## [0.5.1] — 2026-10-10
 
 ### Fixed
 

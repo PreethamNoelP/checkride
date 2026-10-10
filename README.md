@@ -35,7 +35,7 @@ $ checkride .
 
 Python 3.11+. No dependencies, no account, no network access, and it never
 runs the code it reads. (Before the first PyPI release:
-`pip install git+https://github.com/PreethamNoelP/checkride.git@v0.5.0`.)
+`pip install git+https://github.com/PreethamNoelP/checkride.git@v0.5.1`.)
 
 ## What it catches
 
@@ -180,7 +180,7 @@ checkride gets wrong —
 **GitHub Actions**
 
 ```yaml
-- uses: PreethamNoelP/checkride@v0.5.0
+- uses: PreethamNoelP/checkride@v0.5.1
   with:
     path: .
     fail-on-incomplete: "true"
@@ -189,7 +189,7 @@ checkride gets wrong —
 With GitHub code scanning (findings appear on the pull request):
 
 ```yaml
-- uses: PreethamNoelP/checkride@v0.5.0
+- uses: PreethamNoelP/checkride@v0.5.1
   with:
     sarif-file: checkride.sarif
   continue-on-error: true
@@ -203,14 +203,14 @@ readability; pin them to a commit SHA as this repository's own workflows do.)
 
 Inputs: `path`, `min-score`, `scope`, `fail-on-incomplete`, `sarif-file`,
 `config`, `no-config`. For the strictest supply-chain posture, pin the tag's
-full commit SHA instead of `v0.5.0`.
+full commit SHA instead of `v0.5.1`.
 
 **pre-commit**
 
 ```yaml
 repos:
   - repo: https://github.com/PreethamNoelP/checkride
-    rev: v0.5.0
+    rev: v0.5.1
     hooks:
       - id: checkride
         args: [--fail-on-incomplete]
