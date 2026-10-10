@@ -642,3 +642,14 @@ def test_scan_reports_progress_for_both_passes(tmp_path):
     assert calls == [("indexing", n, 3) for n in (1, 2, 3)] + [
         ("checking", n, 3) for n in (1, 2, 3)
     ]
+
+
+def test_json_config_named_as_target_is_not_counted_as_python(tmp_path):
+    target = tmp_path / "claude_desktop_config.json"
+    target.write_text('{"mcpServers": {"x": {"autoApprove": true}}}\n')
+
+    report = scan(target)
+
+    assert report.files_scanned == 0
+    assert report.config_files_scanned == 1
+    assert report.skipped == []

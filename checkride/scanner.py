@@ -51,7 +51,12 @@ def iter_python_files(
     pruned on a guess and so is announced through `on_artifact_dir`.
     """
     if root.is_file():
-        yield root
+        # A JSON file named as the target is an MCP config for configscan,
+        # not Python: parsing it as source would count it as a Python file
+        # (a JSON object is a valid dict expression) or skip it as a syntax
+        # error and make the verdict INCOMPLETE.
+        if root.suffix.lower() != ".json":
+            yield root
         return
     found = walk_files(root, lambda n: n.endswith(".py"), on_artifact_dir)
     for path in sorted(found):
