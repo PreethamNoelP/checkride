@@ -15,6 +15,7 @@ https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 """
 
 import hashlib
+import re
 from typing import Any
 
 from checkride import __version__
@@ -101,6 +102,24 @@ def _fingerprints(findings: list[Finding]) -> list[str]:
     return result
 
 
+_URI_UNRESERVED = re.compile(rb"[A-Za-z0-9._~/-]")
+
+
+def _file_uri(path: str) -> str:
+    """A repository-relative path as a SARIF URI reference (RFC 3986).
+
+    `artifactLocation.uri` is a URI, not a file name: a space, `#` or `%` in
+    a path left raw is read as a fragment or an escape, so the result
+    resolves to no file in code scanning. Percent-encode every byte outside
+    the unreserved set, keeping `/`. Hand-rolled rather than urllib.parse so
+    the package's documented import list stays unchanged.
+    """
+    return "".join(
+        chr(b) if _URI_UNRESERVED.fullmatch(bytes([b])) else f"%{b:02X}"
+        for b in path.encode("utf-8")
+    )
+
+
 def _result(f: Finding, fingerprint: str) -> dict[str, Any]:
     region: dict[str, Any] = {"startLine": f.line}
     if f.column:
@@ -113,7 +132,7 @@ def _result(f: Finding, fingerprint: str) -> dict[str, Any]:
         "locations": [
             {
                 "physicalLocation": {
-                    "artifactLocation": {"uri": f.file},
+                    "artifactLocation": {"uri": _file_uri(f.file)},
                     "region": region,
                 }
             }

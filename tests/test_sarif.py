@@ -191,3 +191,15 @@ def test_accepted_risks_are_external_suppressions_with_their_reason():
     assert accepted[0]["suppressions"][0] == {
         "kind": "external", "status": "accepted", "justification": "reviewed in SEC-123"
     }
+
+
+def test_sarif_location_uri_is_percent_encoded():
+    # artifactLocation.uri is an RFC 3986 reference: a raw space, '#' or '%'
+    # in a path is read as a separator or an escape and resolves to no file.
+    report = score_contexts(
+        [ctx("auto_approve = True\n", path="my project/a#b%c é.py")]
+    )
+    uri = build_sarif(report)["runs"][0]["results"][0]["locations"][0][
+        "physicalLocation"
+    ]["artifactLocation"]["uri"]
+    assert uri == "my%20project/a%23b%25c%20%C3%A9.py"
