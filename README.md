@@ -198,6 +198,9 @@ With GitHub code scanning (findings appear on the pull request):
     sarif_file: checkride.sarif
 ```
 
+(Third-party actions such as `upload-sarif` are shown by tag for
+readability; pin them to a commit SHA as this repository's own workflows do.)
+
 Inputs: `path`, `min-score`, `scope`, `fail-on-incomplete`, `sarif-file`,
 `config`, `no-config`. For the strictest supply-chain posture, pin the tag's
 full commit SHA instead of `v0.5.0`.
@@ -327,7 +330,7 @@ code execution. Design details are in
 ## Project status
 
 Version 0.5 — usable today, and the rules are still being refined. Tested
-on Linux and Windows, Python 3.11–3.13: 1,222 automated tests, strict type
+on Linux, Windows and macOS, Python 3.11–3.13: 1,226 automated tests, strict type
 checking, linting, the accuracy benchmark, and a build-and-install check of
 the published package, on every change.
 

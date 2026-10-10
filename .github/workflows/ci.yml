@@ -25,10 +25,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # macOS is here for its case-insensitive-by-default filesystem and
+        # /tmp -> /private/tmp symlink, both of which the scan-root and
+        # exclude-glob code has to get right.
+        #
         # Windows is in the matrix on purpose: path handling, exclude-glob
         # case sensitivity and encoding detection have all been
         # platform-dependent bugs in this scanner before.
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,6 +46,20 @@ jobs:
 
       - name: Run test suite
         run: python -m pytest tests/ -q
+
+  coverage:
+    # One platform: coverage does not vary across the matrix. The floor is
+    # set just under the measured 97% so a change that lands untested code
+    # fails here instead of quietly eroding the suite.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - name: Tests with a coverage floor
+        run: python -m pytest tests/ -q --cov=checkride --cov-report=term-missing --cov-fail-under=95
 
   lint:
     # One job, not six: lint and type results do not vary across the OS x
@@ -236,7 +254,7 @@ jobs:
           python-version: "3.12"
       - name: Build sdist and wheel
         run: |
-          python -m pip install build
+          python -m pip install build==1.6.1
           python -m build
       - name: Install the wheel in a clean environment and run it
         run: |

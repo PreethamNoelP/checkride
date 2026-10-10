@@ -50,7 +50,7 @@ classifiers = [
 # Pinned exactly: an unpinned linter turns a new upstream release into a red
 # build on a commit that changed nothing. Dependabot (.github/dependabot.yml)
 # proposes each upgrade as its own reviewable PR.
-dev = ["pytest==9.1.1", "mypy==2.4.0", "ruff==0.16.10"]
+dev = ["pytest==9.1.1", "pytest-cov==7.1.0", "mypy==2.4.0", "ruff==0.16.10"]
 
 [project.urls]
 Homepage = "https://github.com/PreethamNoelP/checkride"

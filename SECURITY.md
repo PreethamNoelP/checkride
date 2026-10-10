@@ -87,7 +87,7 @@ your source. It carries file paths, function and parameter names, resolved
 call names, and the names and boolean values of governance flags. It does
 **not** carry string literals, secret values, or source lines.
 
-So the sensitivity of an checkride report is roughly the sensitivity of
+So the sensitivity of a checkride report is roughly the sensitivity of
 your identifier names and file layout. That matters when a report leaves
 your machine by a route checkride is not involved in — uploading SARIF to
 a third-party dashboard, pasting JSON into a public issue, or a CI log.

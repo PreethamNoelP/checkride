@@ -9,7 +9,9 @@ reports of false positives or false negatives.
 $ git clone https://github.com/PreethamNoelP/checkride.git
 $ cd checkride
 $ pip install -e ".[dev]"
-$ python -m pytest tests/ -q
+$ python -m pytest tests/ -q     # 4 symlink tests skip on Windows without
+                                  # symlink privilege; Linux CI runs them
+$ python -m pytest tests/ -q --cov=checkride   # CI requires >= 95%
 $ mypy                            # --strict, configured in pyproject.toml
 $ ruff check checkride/ tests/
 ```
