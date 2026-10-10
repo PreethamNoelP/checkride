@@ -9,6 +9,21 @@ scanner, "breaking" includes anything that can change a repository's score
 or verdict, since that is what CI gates on — those are called out
 explicitly.
 
+## [Unreleased]
+
+### Fixed
+
+- **SARIF file locations are percent-encoded.** `artifactLocation.uri` is a
+  URI reference, so a path containing a space, `#` or `%` (a checkout under
+  `My Project/`, say) was emitted raw and resolved to no file in code
+  scanning.
+- A JSON MCP config named directly as the target is no longer also parsed as
+  Python and reported as a "Python file".
+
+### Documentation
+
+- The README's code-scanning example uses `upload-sarif@v4`.
+
 ## [0.5.1] — 2026-10-10
 
 ### Fixed

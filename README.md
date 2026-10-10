@@ -193,7 +193,7 @@ With GitHub code scanning (findings appear on the pull request):
   with:
     sarif-file: checkride.sarif
   continue-on-error: true
-- uses: github/codeql-action/upload-sarif@v3
+- uses: github/codeql-action/upload-sarif@v4
   with:
     sarif_file: checkride.sarif
 ```
