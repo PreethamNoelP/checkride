@@ -176,6 +176,12 @@ def _has_javascript(target: Path) -> bool:
     return next(walk_files(target, lambda n: n.endswith(_JS_SUFFIXES)), None) is not None
 
 
+def _progress(phase: str, done: int, total: int) -> None:
+    if total >= 50 and (done % 10 == 0 or done == total):
+        sys.stderr.write(f"\rcheckride: {phase} {done}/{total} files")
+        sys.stderr.flush()
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="checkride",
@@ -341,7 +347,14 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         config = dataclasses.replace(config, min_score=args.min_score)
 
-    report = scan(target, config=config)
+    # Progress goes to stderr, and only to a terminal: a CI log or a pipe
+    # would fill with carriage-return noise, and --json/--sarif consumers
+    # read stdout.
+    show_progress = sys.stderr.isatty()
+    report = scan(target, config=config, progress=_progress if show_progress else None)
+    if show_progress:
+        sys.stderr.write("\r\x1b[K")
+        sys.stderr.flush()
 
     if report.files_scanned == 0 and report.config_files_scanned == 0:
         # A score over zero evidence is vacuous, and a vacuous score must

@@ -9,6 +9,24 @@ scanner, "breaking" includes anything that can change a repository's score
 or verdict, since that is what CI gates on — those are called out
 explicitly.
 
+## [Unreleased]
+
+### Fixed
+
+- **Directories named `env`, `build` or `dist` are no longer skipped
+  silently.** They were pruned by name, so an agent tool under `src/env/`
+  was never scanned. Virtual environments are now recognized by
+  `pyvenv.cfg` (whatever their name), and `build/` / `dist/` are pruned only
+  at the scan root beside a `pyproject.toml` / `setup.py` / `setup.cfg`, with
+  a warning. Repositories that had such a directory can see new findings.
+- The directory walk prunes before descending, instead of listing every
+  file under `node_modules` and `.venv` and filtering afterwards.
+
+### Added
+
+- Scan progress on stderr when it is a terminal (never for pipes, CI logs
+  or `--json` / `--sarif` consumers).
+
 ## [0.5.0] — 2026-10-04
 
 ### Changed — renamed from agentgauge to checkride (breaking)

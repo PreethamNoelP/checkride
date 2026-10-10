@@ -218,8 +218,15 @@ def module_name(path: Path, root: Path) -> tuple[str, bool]:
     return ".".join(parts), is_package
 
 
-def scan(target: str | Path, config: Config | None = None) -> ScanReport:
+def scan(
+    target: str | Path,
+    config: Config | None = None,
+    progress: Callable[[str, int, int], None] | None = None,
+) -> ScanReport:
     """Scan a file or directory.
+
+    `progress(phase, done, total)` is called after each file of each pass,
+    so a front end can show that a large repository is still being worked on.
 
     Two passes. The first summarizes every file (tool entry points, call
     edges, logging) into a ProgramIndex, so reachability crosses files; the
@@ -274,7 +281,9 @@ def scan(target: str | Path, config: Config | None = None) -> ScanReport:
     summaries = []
     kept: dict[Path, FileContext] = {}
     kept_bytes = 0
-    for path in paths:
+    for done, path in enumerate(paths, 1):
+        if progress is not None:
+            progress("indexing", done, len(paths))
         if refused(path):
             continue
         rel = _display_path(path, root, cwd)
@@ -296,7 +305,9 @@ def scan(target: str | Path, config: Config | None = None) -> ScanReport:
     del summaries
 
     def iter_contexts() -> Iterator[FileContext]:
-        for path in paths:
+        for done, path in enumerate(paths, 1):
+            if progress is not None:
+                progress("checking", done, len(paths))
             rel = _display_path(path, root, cwd)
 
             def note(reason: str, path: Path = path, rel: str = rel) -> None:

@@ -619,3 +619,12 @@ def test_empty_python_free_directory_gets_no_javascript_hint(tmp_path, capsys):
     assert main([str(tmp_path)]) == 2
     assert "JavaScript" not in capsys.readouterr().err
 
+
+
+def test_no_progress_output_when_stderr_is_not_a_terminal(tmp_path, capsys):
+    for i in range(60):
+        (tmp_path / f"m{i}.py").write_text("x = 1\n")
+
+    main([str(tmp_path), "--json"])
+
+    assert "\r" not in capsys.readouterr().err

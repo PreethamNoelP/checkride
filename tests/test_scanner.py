@@ -630,3 +630,15 @@ def test_root_build_dir_without_packaging_file_is_scanned(tmp_path):
     (tmp_path / "build" / "s.py").write_text(_WIPE)
 
     assert scan(tmp_path).files_scanned == 1
+
+
+def test_scan_reports_progress_for_both_passes(tmp_path):
+    for i in range(3):
+        (tmp_path / f"m{i}.py").write_text("x = 1\n")
+    calls = []
+
+    scan(tmp_path, progress=lambda phase, done, total: calls.append((phase, done, total)))
+
+    assert calls == [("indexing", n, 3) for n in (1, 2, 3)] + [
+        ("checking", n, 3) for n in (1, 2, 3)
+    ]
