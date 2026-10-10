@@ -133,8 +133,8 @@ def test_repo_living_under_a_skip_named_directory_is_still_scanned(tmp_path):
 
 
 def test_skip_dirs_still_apply_inside_the_scan_root(tmp_path):
-    (tmp_path / "build").mkdir()
-    (tmp_path / "build" / "generated.py").write_text("auto_approve = True\n")
+    (tmp_path / "node_modules").mkdir()
+    (tmp_path / "node_modules" / "generated.py").write_text("auto_approve = True\n")
     (tmp_path / "app.py").write_text("x = 1\n")
 
     report = scan(tmp_path)
