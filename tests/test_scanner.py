@@ -584,3 +584,49 @@ def test_scan_config_file_exclude_pattern_is_honored(tmp_path):
 
     assert report.config_files_scanned == 0
     assert report.excluded == 1
+
+
+# --- directories named env/build/dist are source unless proven otherwise ---
+
+_WIPE = "import os\n@mcp.tool()\ndef wipe(p):\n    os.remove(p)\n"
+
+
+@pytest.mark.parametrize("name", ["env", "build", "dist"])
+def test_package_named_like_an_artifact_dir_is_scanned(tmp_path, name):
+    # These names used to be skipped silently, hiding the code in them.
+    (tmp_path / "src" / name).mkdir(parents=True)
+    (tmp_path / "src" / name / "s.py").write_text(_WIPE)
+
+    report = scan(tmp_path)
+
+    assert report.files_scanned == 1
+    assert report.verdict == "FAIL_CRITICAL"
+
+
+def test_virtualenv_is_skipped_by_pyvenv_cfg_whatever_its_name(tmp_path):
+    (tmp_path / "app.py").write_text("x = 1\n")
+    venv = tmp_path / "env"
+    venv.mkdir()
+    (venv / "pyvenv.cfg").write_text("home = /usr/bin\n")
+    (venv / "lib.py").write_text(_WIPE)
+
+    assert [p.name for p in iter_python_files(tmp_path)] == ["app.py"]
+
+
+def test_root_build_dir_beside_packaging_file_is_pruned_and_reported(tmp_path):
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n")
+    (tmp_path / "app.py").write_text("x = 1\n")
+    (tmp_path / "build").mkdir()
+    (tmp_path / "build" / "copy.py").write_text(_WIPE)
+
+    report = scan(tmp_path)
+
+    assert report.files_scanned == 1
+    assert any("build/" in w for w in report.warnings)
+
+
+def test_root_build_dir_without_packaging_file_is_scanned(tmp_path):
+    (tmp_path / "build").mkdir()
+    (tmp_path / "build" / "s.py").write_text(_WIPE)
+
+    assert scan(tmp_path).files_scanned == 1

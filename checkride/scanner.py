@@ -17,7 +17,7 @@ from pathlib import Path
 from checkride import callgraph, configscan
 from checkride.astutils import FileContext
 from checkride.config import Config
-from checkride.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded
+from checkride.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded, walk_files
 from checkride.rules import defaults
 from checkride.scoring import ScanReport, score_contexts
 
@@ -35,6 +35,7 @@ def iter_python_files(
     root: Path,
     exclude: tuple[str, ...] = (),
     on_excluded: Callable[[Path], None] | None = None,
+    on_artifact_dir: Callable[[Path], None] | None = None,
 ) -> Iterator[Path]:
     """Yield .py files under root in sorted (deterministic) order,
     or root itself if it is a single file. An explicitly named file is
@@ -43,17 +44,18 @@ def iter_python_files(
 
     `on_excluded` is called once per file an `exclude` pattern removed, so
     the report can say how much of the tree config kept it from seeing.
-    SKIP_DIRS hits are deliberately not reported: those are built-in noise
-    filters (.venv, node_modules) that every run applies identically, not a
-    project decision a reader of the report needs to know about.
+    Noise directories (.venv, node_modules, caches) are deliberately not
+    reported: those are built-in filters every run applies identically, not
+    a project decision a reader of the report needs to know about. The one
+    exception is packaging output (see fswalk.classify_dir), which is
+    pruned on a guess and so is announced through `on_artifact_dir`.
     """
     if root.is_file():
         yield root
         return
-    for path in sorted(root.rglob("*.py")):
+    found = walk_files(root, lambda n: n.endswith(".py"), on_artifact_dir)
+    for path in sorted(found):
         rel = path.relative_to(root)
-        if any(part in SKIP_DIRS for part in rel.parts):
-            continue
         if exclude and is_excluded(rel.as_posix(), exclude):
             if on_excluded is not None:
                 on_excluded(path)
@@ -237,7 +239,10 @@ def scan(target: str | Path, config: Config | None = None) -> ScanReport:
         if path.suffix == ".py":
             excluded_py.append(path)
 
-    paths = list(iter_python_files(root, config.exclude, count_excluded))
+    artifact_dirs: list[Path] = []
+    paths = list(
+        iter_python_files(root, config.exclude, count_excluded, artifact_dirs.append)
+    )
 
     def parse(path: Path, rel: str, note: Callable[[str], None] | None) -> FileContext | None:
         module, _is_package = module_name(path, root)
@@ -355,6 +360,13 @@ def scan(target: str | Path, config: Config | None = None) -> ScanReport:
     # Excluding files is a project decision, not a coverage gap, so it does
     # not make the verdict INCOMPLETE -- but it is always reported.
     report.excluded = excluded
+    if artifact_dirs:
+        names = ", ".join(sorted(f"{d.name}/" for d in artifact_dirs))
+        report.warnings.append(
+            f"{names} not scanned: packaging output next to a project file "
+            "(pyproject.toml / setup.py). Scan it by naming it as the target "
+            "if it holds source"
+        )
     if excluded:
         report.warnings.append(
             f"{excluded} file(s) were not scanned because an 'exclude' pattern "

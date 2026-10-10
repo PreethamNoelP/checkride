@@ -23,7 +23,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from checkride.config import RuleConfig
-from checkride.fswalk import MAX_FILE_BYTES, SKIP_DIRS, is_excluded
+from checkride.fswalk import MAX_FILE_BYTES, is_excluded, walk_files
 from checkride.models import Finding
 from checkride.rules.defaults import (
     DANGEROUS_WHEN_FALSE,
@@ -68,7 +68,7 @@ def iter_config_files(
     order -- or root itself if it is a single file whose own name is
     recognized.
 
-    Mirrors scanner.iter_python_files: SKIP_DIRS and `exclude` patterns
+    Mirrors scanner.iter_python_files: the skipped-directory rules and `exclude` patterns
     apply identically to a directory walk, via the same shared helpers
     (not reimplemented here). Naming a single `.py` file as the scan target
     does not implicitly pull in sibling config files from its directory --
@@ -81,12 +81,8 @@ def iter_config_files(
         if root.name in filenames:
             yield root
         return
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or path.name not in filenames:
-            continue
+    for path in sorted(walk_files(root, lambda n: n in filenames)):
         rel = path.relative_to(root)
-        if any(part in SKIP_DIRS for part in rel.parts):
-            continue
         if exclude and is_excluded(rel.as_posix(), exclude):
             if on_excluded is not None:
                 on_excluded(path)

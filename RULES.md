@@ -365,8 +365,14 @@ above. Nothing is imported, executed or evaluated — `ast.parse` and
 - symlinks whose target is outside the scan root or cannot be resolved.
 
 Not scanned and not reported: `.git`, `__pycache__`, `.venv`, `venv`,
-`env`, `node_modules`, `site-packages`, `build`, `dist` and tool caches,
-matched relative to the scan root.
+`node_modules`, `site-packages`, tool caches, and any directory containing a
+`pyvenv.cfg` (a virtual environment, whatever it is named), matched relative
+to the scan root.
+
+Not scanned, but reported as a warning: a `build/` or `dist/` directory at
+the scan root, next to a `pyproject.toml`, `setup.py` or `setup.cfg` (packaging
+output). A directory merely *named* `env`, `build` or `dist` anywhere else is
+ordinary source and is scanned.
 
 <a id="configuration"></a>
 ## Configuration

@@ -169,15 +169,11 @@ _JS_SUFFIXES = (".js", ".mjs", ".cjs", ".ts", ".mts", ".cts")
 def _has_javascript(target: Path) -> bool:
     """True if the target holds JS/TS sources (outside the usual noise
     directories). Stops at the first one found."""
-    from checkride.fswalk import SKIP_DIRS
+    from checkride.fswalk import walk_files
 
     if target.is_file():
         return target.suffix in _JS_SUFFIXES
-    for _dirpath, dirnames, filenames in os.walk(target):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
-        if any(name.endswith(_JS_SUFFIXES) for name in filenames):
-            return True
-    return False
+    return next(walk_files(target, lambda n: n.endswith(_JS_SUFFIXES)), None) is not None
 
 
 def _build_parser() -> argparse.ArgumentParser:
