@@ -263,6 +263,12 @@ function = "rebuild_index"
 reason = "Fixed make target; no model input (SEC-142)"
 ```
 
+Scanning a framework or SDK repository? Its tests, docs and examples are full
+of deliberately naive tools, and every one counts as a site, so the score
+says little about the library itself. Add
+`exclude = ["tests/*", "docs*", "examples/*"]` (or point checkride at the
+package directory) to judge the code that ships.
+
 Settings are validated strictly: a typo, an unknown rule, or a setting that
 would quietly switch a check off is an error, not a silent no-op. When you
 scan code you do not control, use `--no-config` — otherwise a repository's
