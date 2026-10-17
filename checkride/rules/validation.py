@@ -97,6 +97,12 @@ _PATH_CALLS = frozenset({
     "os.path.normpath", "os.listdir", "os.scandir", "os.stat", "os.walk",
     "shutil.copy", "shutil.copyfile", "shutil.copytree", "shutil.move",
 })
+# Calls that only change a value's type or wrap it as a path object, so the
+# result is as (un)validated as the argument it was made from.
+_CONVERSION_CALLS = frozenset({
+    "Path", "pathlib.Path", "PurePath", "pathlib.PurePath", "PosixPath",
+    "WindowsPath", "str", "int", "float", "os.fspath",
+})
 _SCALAR_ANNOTATIONS = frozenset({"int", "float", "bool", "complex"})
 # Sinks that interpret a string's content -- as a path, a command, code or a
 # query. An identifier handed to a payment or cloud API is authorized by that
@@ -108,8 +114,21 @@ def _names_in(node: ast.AST) -> set[str]:
     return {n.id for n in ast.walk(node) if isinstance(n, ast.Name)}
 
 
+# "target" and "dest" are only suspicious as a place to act on. Beside a word
+# that says what kind of value it is -- a time zone, language, currency or
+# unit -- the name is a choice from a closed set, not a location.
+_WEAK_RISKY_TOKENS = frozenset({"target", "dest", "destination"})
+_VALUE_KIND_TOKENS = frozenset({
+    "timezone", "tz", "language", "lang", "locale", "currency", "unit", "units",
+})
+
+
 def _is_risky(name: str, risky: frozenset[str]) -> bool:
-    return bool(word_tokens(name) & risky) or name.lower() in risky
+    tokens = word_tokens(name)
+    hits = tokens & risky
+    if hits and hits <= _WEAK_RISKY_TOKENS and tokens & _VALUE_KIND_TOKENS:
+        return name.lower() in risky
+    return bool(hits) or name.lower() in risky
 
 
 def _is_validator_call(call: ast.Call, ctx: FileContext, tokens: frozenset[str]) -> bool:
@@ -396,6 +415,13 @@ def _argument_reads(
         if key is None or not _is_risky(key, risky):
             continue
         parent = ctx.parents.get(node)
+        # `repo_path = Path(arguments["repo_path"])` is still a local that a
+        # later check can validate: see through a pure type conversion.
+        while (
+            isinstance(parent, ast.Call)
+            and call_name(parent, ctx.import_aliases) in _CONVERSION_CALLS
+        ):
+            parent = ctx.parents.get(parent)
         local = None
         if (
             isinstance(parent, ast.Assign)

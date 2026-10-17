@@ -350,3 +350,69 @@ def test_numeric_params_and_unrelated_params_are_not_inputs():
     )
     assert run(src, scope="tools")[0] == 0
 
+
+
+# -- argument reads wrapped in a type conversion ----------------------------
+
+
+def test_argument_wrapped_in_path_is_still_a_validatable_local():
+    # The git MCP server's shape: the local is made by Path(arguments[...]),
+    # then checked by a validator call before anything uses it.
+    sites, passed, findings = run(
+        "from pathlib import Path\n"
+        "@server.call_tool()\n"
+        "async def call_tool(name, arguments):\n"
+        "    repo_path = Path(arguments['repo_path'])\n"
+        "    validate_repo_path(repo_path, ROOT)\n"
+        "    return open(repo_path).read()\n"
+    )
+    assert (sites, passed, findings) == (1, 1, [])
+
+
+def test_argument_wrapped_in_path_but_never_checked_still_fails():
+    sites, passed, findings = run(
+        "from pathlib import Path\n"
+        "@server.call_tool()\n"
+        "async def call_tool(name, arguments):\n"
+        "    repo_path = Path(arguments['repo_path'])\n"
+        "    return open(repo_path).read()\n"
+    )
+    assert (sites, passed) == (1, 0)
+    assert "'repo_path'" in findings[0].message
+
+
+def test_checking_a_different_name_does_not_clear_a_wrapped_argument():
+    sites, passed, _ = run(
+        "from pathlib import Path\n"
+        "@server.call_tool()\n"
+        "async def call_tool(name, arguments):\n"
+        "    repo_path = Path(arguments['repo_path'])\n"
+        "    validate_repo_path(other, ROOT)\n"
+        "    return open(repo_path).read()\n"
+    )
+    assert (sites, passed) == (1, 0)
+
+
+# -- "target" beside a word naming a closed set of values -------------------
+
+
+@pytest.mark.parametrize("key", ["target_timezone", "dest_currency", "target_language"])
+def test_target_of_a_closed_value_kind_is_not_a_location(key):
+    sites, _, findings = run(
+        "@server.call_tool()\n"
+        "async def call_tool(name, arguments):\n"
+        f"    value = convert(arguments['{key}'])\n"
+        "    return value\n"
+    )
+    assert (sites, findings) == (0, [])
+
+
+@pytest.mark.parametrize("key", ["target", "target_path", "dest_dir", "target_host"])
+def test_target_that_is_a_location_is_still_risky(key):
+    sites, passed, _ = run(
+        "@server.call_tool()\n"
+        "async def call_tool(name, arguments):\n"
+        f"    value = arguments['{key}']\n"
+        "    return value\n"
+    )
+    assert (sites, passed) == (1, 0)
