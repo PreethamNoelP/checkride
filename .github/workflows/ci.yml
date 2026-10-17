@@ -270,3 +270,47 @@ jobs:
           fi
           "$RUNNER_TEMP/venv/bin/pip" show checkride | grep -i '^Requires: *$'
 
+
+  sdist:
+    # The sdist is what a distro packager or a security reviewer builds from.
+    # Unpack it, install it and run the whole suite from there: a fixture or
+    # data file missing from the archive fails here, not on their machine.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Build the sdist
+        run: |
+          python -m pip install build==1.6.1
+          python -m build --sdist
+      - name: Test suite and benchmark from the unpacked sdist
+        run: |
+          mkdir "$RUNNER_TEMP/sdist"
+          tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/sdist"
+          cd "$RUNNER_TEMP/sdist"/checkride-*
+          python -m pip install ".[dev]"
+          python -m pytest tests/ -q
+          python benchmarks/run.py
+
+  reproducible:
+    # Two wheels built from the same commit must be byte-identical, so anyone
+    # can rebuild a release and compare it with what is on PyPI. (The sdist
+    # is not byte-reproducible: its gzip header carries a timestamp.)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Build the wheel twice and compare
+        env:
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          python -m pip install build==1.6.1
+          python -m build --wheel --outdir "$RUNNER_TEMP/a"
+          rm -rf build ./*.egg-info
+          python -m build --wheel --outdir "$RUNNER_TEMP/b"
+          sha256sum "$RUNNER_TEMP"/a/*.whl "$RUNNER_TEMP"/b/*.whl
+          cmp "$RUNNER_TEMP"/a/*.whl "$RUNNER_TEMP"/b/*.whl
