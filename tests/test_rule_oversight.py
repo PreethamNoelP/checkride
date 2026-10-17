@@ -257,3 +257,78 @@ def test_memoized_scope_answer_is_shared_correctly_across_scopes():
     sites, passed, findings = run(src)
     assert (sites, passed) == (3, 2)
     assert [f.line for f in findings] == [8]
+
+
+# --- approval that can be skipped or that the model supplies itself ---
+
+
+def test_or_chain_that_can_skip_the_approval_is_not_a_gate():
+    # `trusted(path)` alone runs the body: request_approval never executes.
+    sites, passed, findings = run(
+        "def wipe(path):\n"
+        "    if trusted(path) or request_approval(path):\n"
+        "        shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 0)
+    assert findings[0].critical is True
+
+
+def test_or_chain_where_every_operand_approves_is_a_gate():
+    sites, passed, _ = run(
+        "def wipe(path):\n"
+        "    if request_approval(path) or ask_human(path):\n"
+        "        shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 1)
+
+
+def test_and_chain_with_an_approval_operand_is_still_a_gate():
+    sites, passed, _ = run(
+        "def wipe(path):\n"
+        "    if is_safe(path) and request_approval(path):\n"
+        "        shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 1)
+
+
+def test_guard_with_and_chain_that_can_skip_the_approval_is_not_a_gate():
+    # Falls through whenever is_safe(path) is false, approval never asked.
+    sites, passed, _ = run(
+        "def wipe(path):\n"
+        "    if is_safe(path) and not request_approval(path):\n"
+        "        return\n"
+        "    shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 0)
+
+
+def test_guard_with_or_chain_and_one_approval_operand_is_a_gate():
+    sites, passed, _ = run(
+        "def wipe(path):\n"
+        "    if is_forbidden(path) or not request_approval(path):\n"
+        "        return\n"
+        "    shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 1)
+
+
+def test_approval_variable_copied_from_a_tool_parameter_is_not_a_gate():
+    sites, passed, findings = run(
+        "def wipe(path, ok):\n"
+        "    approved = ok\n"
+        "    if approved:\n"
+        "        shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 0)
+    assert "tool argument" in findings[0].message
+
+
+def test_parameter_copy_chain_is_followed():
+    sites, passed, _ = run(
+        "def wipe(path, ok):\n"
+        "    a = ok\n"
+        "    approved = a\n"
+        "    if approved:\n"
+        "        shutil.rmtree(path)\n"
+    )
+    assert (sites, passed) == (1, 0)

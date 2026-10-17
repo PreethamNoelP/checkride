@@ -576,3 +576,58 @@ def test_dispatch_tables_and_computed_attributes_are_sinks(src, label):
 def test_harmless_tables_and_attributes_are_not_sinks(src):
     assert labels(src) == []
 
+
+
+# --- sinks the scanner must see however they are spelled ---
+
+
+@pytest.mark.parametrize(
+    "call, label",
+    [
+        ("os.spawnlp(os.P_WAIT, c, c)", "shell exec"),
+        ("os.spawnle(os.P_WAIT, c, c, {})", "shell exec"),
+        ("os.spawnlpe(os.P_WAIT, c, c, {})", "shell exec"),
+        ("os.spawnve(os.P_WAIT, c, [c], {})", "shell exec"),
+        ("os.spawnvp(os.P_WAIT, c, [c])", "shell exec"),
+        ("os.spawnvpe(os.P_WAIT, c, [c], {})", "shell exec"),
+        ("os.execlpe(c, c, {})", "shell exec"),
+        ("os.startfile(c)", "shell exec"),
+        ("builtins.eval(c)", "code exec"),
+        ("builtins.exec(c)", "code exec"),
+    ],
+)
+def test_process_and_code_exec_family_is_complete(call, label):
+    assert sensitive_label(first_call(call)) == label
+
+
+@pytest.mark.parametrize(
+    "call, label",
+    [
+        ("asyncio.to_thread(subprocess.run, cmd, shell=True)", "shell exec"),
+        ("loop.run_in_executor(None, shutil.rmtree, path)", "file delete"),
+        ("threading.Thread(target=os.system, args=(cmd,))", "shell exec"),
+        ("map(os.remove, paths)", "file delete"),
+        ("functools.partial(eval, src)", "code exec"),
+    ],
+)
+def test_sink_passed_by_reference_is_a_site(call, label):
+    assert sensitive_label(first_call(call)) == label
+
+
+def test_sink_passed_by_reference_resolves_aliases():
+    tree = ast.parse("from subprocess import run\nasyncio.to_thread(run, c)")
+    call = next(n for n in ast.walk(tree) if isinstance(n, ast.Call))
+    assert sensitive_label(call, build_import_aliases(tree)) == "shell exec"
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "register(gateway.charge)",     # suffix table is not applied to references
+        "asyncio.to_thread(helper, p)",
+        "map(str, paths)",
+        "mcp.add_tool(read_file)",
+    ],
+)
+def test_ordinary_callbacks_are_not_sites(call):
+    assert sensitive_label(first_call(call)) is None

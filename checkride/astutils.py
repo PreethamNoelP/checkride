@@ -50,10 +50,18 @@ SENSITIVE_EXACT: dict[str, str] = {
     "os.execve": "shell exec",
     "os.execvp": "shell exec",
     "os.execvpe": "shell exec",
+    "os.execlpe": "shell exec",
     "os.posix_spawn": "shell exec",
     "os.posix_spawnp": "shell exec",
     "os.spawnl": "shell exec",
+    "os.spawnle": "shell exec",
+    "os.spawnlp": "shell exec",
+    "os.spawnlpe": "shell exec",
     "os.spawnv": "shell exec",
+    "os.spawnve": "shell exec",
+    "os.spawnvp": "shell exec",
+    "os.spawnvpe": "shell exec",
+    "os.startfile": "shell exec",
     "pty.spawn": "shell exec",
     # async process execution -- the asyncio equivalents of subprocess.*,
     # which an agent server written with async handlers is more likely to
@@ -63,6 +71,8 @@ SENSITIVE_EXACT: dict[str, str] = {
     # dynamic code execution
     "eval": "code exec",
     "exec": "code exec",
+    "builtins.eval": "code exec",
+    "builtins.exec": "code exec",
     # deserialization that is equivalent to code execution on untrusted
     # input -- the realistic shape being "agent output -> loads()". Only
     # APIs with no safe mode are listed: yaml.load is deliberately absent
@@ -464,7 +474,25 @@ def sensitive_label(
         label = _contextual_label(call, constants or {})
     if label is None:
         label = _dynamic_label(call, aliases, tables or {})
+    if label is None:
+        label = _reference_label(call, aliases)
     return label
+
+
+def _reference_label(call: ast.Call, aliases: dict[str, str] | None) -> str | None:
+    """A sink handed to another call by reference instead of being called:
+    `asyncio.to_thread(subprocess.run, cmd)`, `Thread(target=os.system,
+    ...)`, `loop.run_in_executor(None, shutil.rmtree, p)`, `map(os.remove,
+    paths)`. The callee runs it; the call that hands it over is the
+    action's site. Only exact names count -- the receiver-agnostic suffix
+    table would flag registration of an ordinary `gateway.charge`."""
+    for arg in [*call.args, *(kw.value for kw in call.keywords)]:
+        if not isinstance(arg, (ast.Name, ast.Attribute)):
+            continue
+        name = dotted_name(arg, aliases)
+        if name is not None and (label := SENSITIVE_EXACT.get(name)) is not None:
+            return label
+    return None
 
 
 def build_string_constants(

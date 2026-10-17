@@ -205,6 +205,20 @@ def _value_refs(node: ast.expr, aliases: dict[str, str], class_name: str | None)
     return []
 
 
+def _called_table(func: ast.expr) -> str | None:
+    """`T` for a call through `T[key](...)` or `T.get(key)(...)`."""
+    if isinstance(func, ast.Subscript) and isinstance(func.value, ast.Name):
+        return func.value.id
+    if (
+        isinstance(func, ast.Call)
+        and isinstance(func.func, ast.Attribute)
+        and func.func.attr == "get"
+        and isinstance(func.func.value, ast.Name)
+    ):
+        return func.func.value.id
+    return None
+
+
 def _registration_refs(call: ast.Call, aliases: dict[str, str]) -> list[Ref]:
     refs: list[Ref] = []
     name = dotted_name(call.func, aliases)
@@ -239,6 +253,21 @@ def summarize(ctx: "FileContext", module: str, is_package: bool = False) -> File
     sink_scopes = {
         id(ctx.enclosing_scope(call)) for call, _label in ctx.candidate_sensitive_calls
     }
+
+    # Module-level dispatch tables of function references
+    # (`HANDLERS = {"rm": do_rm}`): `HANDLERS[name](p)` and
+    # `HANDLERS.get(name)(p)` may run any of them.
+    tables: dict[str, list[Ref]] = {}
+    for node in ctx.scope_nodes(tree):
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and isinstance(node.value, (ast.Dict, ast.List, ast.Tuple, ast.Set))
+        ):
+            members = _value_refs(node.value, aliases, None)
+            if members:
+                tables.setdefault(node.targets[0].id, []).extend(members)
 
     functions: dict[Key, FuncInfo] = {}
     toplevel: dict[str, Key] = {}
@@ -290,6 +319,26 @@ def summarize(ctx: "FileContext", module: str, is_package: bool = False) -> File
                     classes[class_name][stmt.name] = key
                 else:
                     toplevel[stmt.name] = key
+                # `f = do_rm` ... `f(p)`: a local name bound once to a
+                # function reference stands for that function.
+                local_refs: dict[str, Ref] = {}
+                rebound: set[str] = set()
+                for node in ctx.scope_nodes(stmt):
+                    if (
+                        isinstance(node, ast.Assign)
+                        and len(node.targets) == 1
+                        and isinstance(node.targets[0], ast.Name)
+                    ):
+                        local = node.targets[0].id
+                        value_ref = (
+                            _ref_for(node.value, aliases, class_name)
+                            if isinstance(node.value, (ast.Name, ast.Attribute))
+                            else None
+                        )
+                        if value_ref is not None and local not in local_refs:
+                            local_refs[local] = value_ref
+                        else:
+                            rebound.add(local)
                 for node in ctx.scope_nodes(stmt):
                     if not isinstance(node, ast.Call):
                         continue
@@ -297,6 +346,15 @@ def summarize(ctx: "FileContext", module: str, is_package: bool = False) -> File
                     ref = _ref_for(node.func, aliases, class_name)
                     if ref is not None:
                         refs.append(ref)
+                    if (
+                        isinstance(node.func, ast.Name)
+                        and node.func.id in local_refs
+                        and node.func.id not in rebound
+                    ):
+                        refs.append(local_refs[node.func.id])
+                    table = _called_table(node.func)
+                    if table is not None:
+                        refs.extend(tables.get(table, []))
                     # Functions handed over as callbacks run as a result of
                     # this call: to_thread(helper), executor.submit(job).
                     for arg in [*node.args, *(kw.value for kw in node.keywords)]:
