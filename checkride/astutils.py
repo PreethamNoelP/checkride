@@ -833,7 +833,55 @@ class FileContext:
             (call, label)
             for call in self._defs_and_calls[1]
             if (label := sensitive_label(call, aliases, constants, tables)) is not None
+            and not self._deletes_fixed_name(call, label)
         ]
+
+    def _deletes_fixed_name(self, call: ast.Call, label: str) -> bool:
+        """`(git_dir / "MERGE_HEAD").unlink()`: a pathlib delete whose last
+        component is a string literal -- or a loop variable over literals --
+        can only remove files with those fixed names. That is housekeeping,
+        not a model-chosen deletion, so it is not a sink."""
+        func = call.func
+        if label != "file delete" or not (
+            isinstance(func, ast.Attribute) and func.attr == "unlink"
+        ):
+            return False
+        scope = self.enclosing_scope(call)
+        return self._fixed_leaf(func.value, scope, 2)
+
+    def _fixed_leaf(self, expr: ast.expr, scope: ast.AST, depth: int) -> bool:
+        if isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.Div):
+            return self._literal_text(expr.right, scope)
+        if isinstance(expr, ast.Name) and depth > 0:
+            values = [
+                n.value for n in self.scope_nodes(scope)
+                if isinstance(n, ast.Assign)
+                and len(n.targets) == 1
+                and isinstance(n.targets[0], ast.Name)
+                and n.targets[0].id == expr.id
+            ]
+            return len(values) == 1 and self._fixed_leaf(values[0], scope, depth - 1)
+        return False
+
+    def _literal_text(self, expr: ast.expr, scope: ast.AST) -> bool:
+        """True for a string literal, or a name that only ever holds one:
+        a module constant, or a `for` variable over a literal tuple/list."""
+        if isinstance(expr, ast.Constant):
+            return isinstance(expr.value, str)
+        if not isinstance(expr, ast.Name):
+            return False
+        if expr.id in self.string_constants:
+            return True
+        loops = [
+            n for n in self.scope_nodes(scope)
+            if isinstance(n, ast.For)
+            and isinstance(n.target, ast.Name)
+            and n.target.id == expr.id
+        ]
+        return len(loops) == 1 and isinstance(loops[0].iter, (ast.Tuple, ast.List)) and all(
+            isinstance(e, ast.Constant) and isinstance(e.value, str)
+            for e in loops[0].iter.elts
+        )
 
     @cached_property
     def sink_tables(self) -> dict[str, str]:
