@@ -215,6 +215,20 @@ class ApprovalAnalyzer:
             name for name, values in bindings.items()
             if values and all(isinstance(v, ast.Constant) for v in values)
         }
+        # `approved = ok` where `ok` is a model-chosen parameter is the model
+        # approving itself with an extra step. Copies are followed to a fixed
+        # point so `a = ok; b = a` is caught too.
+        copies = set(params)
+        grew = True
+        while grew:
+            grew = False
+            for name, values in bindings.items():
+                if name not in copies and values and all(
+                    isinstance(v, ast.Name) and v.id in copies for v in values
+                ):
+                    copies.add(name)
+                    grew = True
+        params = frozenset(copies)
         if scope is not self.tree:
             module = self.facts(self.tree, False)
             constant |= {
@@ -335,6 +349,18 @@ class ApprovalAnalyzer:
     def _approves(self, test: ast.AST, facts: _Facts, when_true: bool) -> bool:
         """True if `test` mentions approval and the branch taken when it is
         `when_true` is the approved one (or polarity is unknown)."""
+        if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
+            return self._approves(test.operand, facts, not when_true)
+        if isinstance(test, ast.BoolOp):
+            # `if a or approved():` runs its body when `a` alone is true, so
+            # the approval can be skipped: every operand must approve. The
+            # same holds for the false side of an `and` chain (De Morgan).
+            # Otherwise (`and` taken true, `or` taken false) every operand
+            # was evaluated to the branch's value, so one approving operand
+            # is enough.
+            if isinstance(test.op, ast.Or) == when_true:
+                return all(self._approves(v, facts, when_true) for v in test.values)
+            return any(self._approves(v, facts, when_true) for v in test.values)
         if not self._mentions(test, facts):
             return False
         polarity = self._polarity(test, facts)
