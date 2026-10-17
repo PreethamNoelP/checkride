@@ -142,6 +142,15 @@ def test_skip_dirs_still_apply_inside_the_scan_root(tmp_path):
     assert report.files_scanned == 1
 
 
+@pytest.mark.parametrize("name", [".git", ".hg", ".svn", "__pycache__", "site-packages"])
+def test_every_vcs_and_cache_directory_is_pruned(tmp_path, name):
+    (tmp_path / name).mkdir()
+    (tmp_path / name / "stray.py").write_text("auto_approve = True\n")
+    (tmp_path / "app.py").write_text("x = 1\n")
+
+    assert scan(tmp_path).files_scanned == 1
+
+
 # --- exclude pattern semantics ---
 
 def test_double_star_prefix_also_matches_at_the_root(tmp_path):
