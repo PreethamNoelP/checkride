@@ -11,6 +11,8 @@ explicitly.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-10-18
+
 ### Fixed (scores and verdicts can change)
 
 - **Approval that can be skipped is no longer a gate.** `if trusted(p) or
