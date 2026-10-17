@@ -127,6 +127,11 @@ literals (`QUERY = "SELECT ..."`, `STRIPE_URL = "https://api.stripe.com"`).
 `SafeLoader` and ubiquitous); `open(path, "w")`; HTTP `GET`s; constant,
 parameterized SQL.
 
+**Sinks by reference.** A sink handed to another call instead of being called
+(`asyncio.to_thread(subprocess.run, cmd)`, `Thread(target=os.system)`,
+`map(os.remove, paths)`) is a site at the call that hands it over; only the
+exact names above count, not the receiver-agnostic suffixes.
+
 **Sinks without a static name.** A call through a dispatch table holding a
 sensitive function (`ACTIONS = {"rm": shutil.rmtree}` then
 `ACTIONS[name](p)` or `ACTIONS.get(name)(p)`) takes the most severe label

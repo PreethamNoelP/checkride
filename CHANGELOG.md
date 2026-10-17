@@ -11,6 +11,25 @@ explicitly.
 
 ## [Unreleased]
 
+### Fixed (scores and verdicts can change)
+
+- **Approval that can be skipped is no longer a gate.** `if trusted(p) or
+  request_approval(p): rmtree(p)` ran the body without asking; every operand
+  of an `or` must now approve (and the same for the false side of an `and`
+  guard).
+- **A tool parameter copied into an approval-named variable** (`approved =
+  ok`, then `if approved:`) is the model approving itself, as `if ok:` already
+  was.
+- **Sinks handed over by reference are sites**: `asyncio.to_thread(subprocess.run,
+  ...)`, `loop.run_in_executor(None, shutil.rmtree, p)`, `Thread(target=os.system)`,
+  `map(os.remove, paths)`.
+- **Missing sink names**: `os.spawnle/spawnlp/spawnlpe/spawnve/spawnvp/spawnvpe`
+  (RULES.md already claimed `os.spawn*`), `os.execlpe`, `os.startfile`,
+  `builtins.eval/exec`.
+- **Reachability through a dispatch table or local alias**: `HANDLERS[name](p)`,
+  `HANDLERS.get(name)(p)` and `f = do_rm; f(p)` now reach the helper instead of
+  reporting its sink as "not agent-reachable".
+
 ### Fixed
 
 - **SARIF file locations are percent-encoded.** `artifactLocation.uri` is a
