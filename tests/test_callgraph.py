@@ -367,3 +367,33 @@ def test_an_approval_decorator_in_another_file_gates_the_tool(tmp_path, monkeypa
     report = scan(tmp_path, Config(min_score=0))
     assert not any(f.rule == "human-oversight" for f in report.findings)
 
+
+
+# --- indirection a tool uses to reach a helper -----------------------------
+
+_HELPER = "import os\ndef do_rm(p):\n    os.remove(p)\n"
+
+
+@pytest.mark.parametrize("body", [
+    "H = {'rm': do_rm}\n@mcp.tool()\ndef t(name: str, p: str):\n    H[name](p)\n",
+    "H = {'rm': do_rm}\n@mcp.tool()\ndef t(name: str, p: str):\n    H.get(name)(p)\n",
+    "H = [do_rm]\n@mcp.tool()\ndef t(i: int, p: str):\n    H[i](p)\n",
+    "@mcp.tool()\ndef t(p: str):\n    f = do_rm\n    f(p)\n",
+])
+def test_helper_reached_through_table_or_local_alias_is_judged(body, tmp_path):
+    target = tmp_path / "s.py"
+    target.write_text(_HELPER + body)
+    report = scan(target, Config())
+    assert report.out_of_scope_sensitive_calls == 0
+    assert report.verdict == "FAIL_CRITICAL"
+
+
+def test_rebound_local_alias_is_not_followed(tmp_path):
+    # `f` is bound twice, so which function it holds is unknown: no guess.
+    target = tmp_path / "s.py"
+    target.write_text(
+        _HELPER
+        + "def other(p):\n    return p\n"
+        + "@mcp.tool()\ndef t(p: str):\n    f = do_rm\n    f = other\n    f(p)\n"
+    )
+    assert scan(target, Config()).out_of_scope_sensitive_calls == 1
