@@ -34,8 +34,7 @@ $ checkride .
 ```
 
 Python 3.11+. No dependencies, no account, no network access, and it never
-runs the code it reads. (Before the first PyPI release:
-`pip install git+https://github.com/PreethamNoelP/checkride.git@v0.6.0`.)
+runs the code it reads.
 
 ## What it catches
 
@@ -359,4 +358,4 @@ Released under the
 
 ---
 
-Created by **Preetham Noel P** · [GitHub](https://github.com/PreethamNoelP) · [LinkedIn](https://www.linkedin.com/in/preethamnoelp)
+Created by **Preetham Noel P** · [GitHub](https://github.com/PreethamNoelP)
