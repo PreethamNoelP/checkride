@@ -34,8 +34,7 @@ $ checkride .
 ```
 
 Python 3.11+. No dependencies, no account, no network access, and it never
-runs the code it reads. (Before the first PyPI release:
-`pip install git+https://github.com/PreethamNoelP/checkride.git@v0.5.1`.)
+runs the code it reads.
 
 ## What it catches
 
@@ -180,7 +179,7 @@ checkride gets wrong —
 **GitHub Actions**
 
 ```yaml
-- uses: PreethamNoelP/checkride@v0.5.1
+- uses: PreethamNoelP/checkride@v0.6.0
   with:
     path: .
     fail-on-incomplete: "true"
@@ -189,7 +188,7 @@ checkride gets wrong —
 With GitHub code scanning (findings appear on the pull request):
 
 ```yaml
-- uses: PreethamNoelP/checkride@v0.5.1
+- uses: PreethamNoelP/checkride@v0.6.0
   with:
     sarif-file: checkride.sarif
   continue-on-error: true
@@ -203,14 +202,14 @@ readability; pin them to a commit SHA as this repository's own workflows do.)
 
 Inputs: `path`, `min-score`, `scope`, `fail-on-incomplete`, `sarif-file`,
 `config`, `no-config`. For the strictest supply-chain posture, pin the tag's
-full commit SHA instead of `v0.5.1`.
+full commit SHA instead of `v0.6.0`.
 
 **pre-commit**
 
 ```yaml
 repos:
   - repo: https://github.com/PreethamNoelP/checkride
-    rev: v0.5.1
+    rev: v0.6.0
     hooks:
       - id: checkride
         args: [--fail-on-incomplete]
@@ -263,6 +262,12 @@ file = "src/server.py"
 function = "rebuild_index"
 reason = "Fixed make target; no model input (SEC-142)"
 ```
+
+Scanning a framework or SDK repository? Its tests, docs and examples are full
+of deliberately naive tools, and every one counts as a site, so the score
+says little about the library itself. Add
+`exclude = ["tests/*", "docs*", "examples/*"]` (or point checkride at the
+package directory) to judge the code that ships.
 
 Settings are validated strictly: a typo, an unknown rule, or a setting that
 would quietly switch a check off is an error, not a silent no-op. When you
@@ -359,4 +364,4 @@ Released under the
 
 ---
 
-Created by **Preetham Noel P** · [GitHub](https://github.com/PreethamNoelP) · [LinkedIn](https://www.linkedin.com/in/preethamnoelp)
+Created by **Preetham Noel P** · [GitHub](https://github.com/PreethamNoelP)

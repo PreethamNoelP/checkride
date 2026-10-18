@@ -107,7 +107,7 @@ Defined in `checkride/astutils.py`. Every label below is **critical**.
 
 | Label | Detected as |
 |---|---|
-| file delete | `os.remove`/`unlink`/`rmdir`/`removedirs`/`truncate`, `shutil.rmtree`; `.rmtree()`, `.unlink()`, `.rmdir()`, `.delete_file()`, `.remove_directory()` on any receiver |
+| file delete | `os.remove`/`unlink`/`rmdir`/`removedirs`/`truncate`, `shutil.rmtree`; `.rmtree()`, `.unlink()`, `.rmdir()`, `.delete_file()`, `.remove_directory()` on any receiver. Not a sink: a pathlib `.unlink()` whose last path component is a string literal, or a loop variable over literals only (`(git_dir / "MERGE_HEAD").unlink()`) -- the model cannot choose what it removes. The directory part is not examined; see Rule 5 |
 | shell exec | `os.system`, `os.popen`, `subprocess.*`, `os.exec*`, `os.spawn*`, `os.posix_spawn*`, `pty.spawn`, `asyncio.create_subprocess_*`; `.Popen()`, `.check_output()` on any receiver |
 | code exec | `eval`, `exec`, `pickle.load(s)`, `marshal.load(s)`, `dill.load(s)`, `yaml.unsafe_load` |
 | sql exec | `execute`/`executemany`/`executescript`/`exec_driver_sql` on a DB-handle-shaped receiver (`cursor`, `conn`, `db`, `session`, `engine`, ...) **with a non-constant query** |
@@ -273,7 +273,14 @@ or a file path.** Inputs are:
   `file`, `filename`, `dir`, `directory`, `folder`, `cmd`, `command`,
   `shell`, `script`, `query`, `sql`, `url`, `uri`, `host`, `endpoint`,
   `target`, `dest`, `destination`, plus `extra_risky_params` — split on
-  `.`, `_` and camelCase (`filePath`, `sqlQuery`);
+  `.`, `_` and camelCase (`filePath`, `sqlQuery`). `target`, `dest` and
+  `destination` alone are weak: beside `timezone`, `tz`, `language`,
+  `lang`, `locale`, `currency`, `unit` or `units` (`target_timezone`) the
+  name is a choice from a closed set, not a location, and is not counted;
+  `target_path` still is. A value wrapped in `Path(...)`, `str(...)`,
+  `int(...)`, `float(...)` or `os.fspath(...)` and assigned to a local
+  (`repo_path = Path(arguments["repo_path"])`) is validated by checking
+  that local;
 - parameters of any name that flow — directly or through one assignment —
   into building a file path (`open(name)`, `Path(name)`,
   `os.path.join(ROOT, name)`, `ROOT / name` where `ROOT` is a path) or into

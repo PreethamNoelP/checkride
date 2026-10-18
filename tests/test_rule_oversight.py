@@ -332,3 +332,63 @@ def test_parameter_copy_chain_is_followed():
         "        shutil.rmtree(path)\n"
     )
     assert (sites, passed) == (1, 0)
+
+
+# -- housekeeping deletes of fixed names ------------------------------------
+
+
+def test_unlink_of_fixed_names_in_a_loop_is_not_a_sink():
+    # git_commit's cleanup of merge state: the model cannot pick the names.
+    sites, _, findings = run(
+        "def finish(git_dir):\n"
+        "    for name in ('MERGE_HEAD', 'MERGE_MSG'):\n"
+        "        (git_dir / name).unlink(missing_ok=True)\n"
+    )
+    assert (sites, findings) == (0, [])
+
+
+def test_unlink_of_a_path_bound_to_a_literal_leaf_is_not_a_sink():
+    sites, _, findings = run(
+        "from pathlib import Path\n"
+        "def finish(repo):\n"
+        "    autostash = Path(repo.git_dir) / 'MERGE_AUTOSTASH'\n"
+        "    autostash.unlink()\n"
+    )
+    assert (sites, findings) == (0, [])
+
+
+def test_unlink_of_a_model_chosen_name_is_still_a_sink():
+    sites, passed, findings = run(
+        "def finish(git_dir, name):\n"
+        "    (git_dir / name).unlink()\n"
+    )
+    assert (sites, passed) == (1, 0)
+    assert findings[0].critical is True
+
+
+def test_unlink_loop_over_a_non_literal_is_still_a_sink():
+    sites, passed, _ = run(
+        "def finish(git_dir, names):\n"
+        "    for name in names:\n"
+        "        (git_dir / name).unlink()\n"
+    )
+    assert (sites, passed) == (1, 0)
+
+
+def test_unlink_loop_with_one_non_literal_element_is_still_a_sink():
+    sites, passed, _ = run(
+        "def finish(git_dir, extra):\n"
+        "    for name in ('MERGE_HEAD', extra):\n"
+        "        (git_dir / name).unlink()\n"
+    )
+    assert (sites, passed) == (1, 0)
+
+
+def test_other_deletes_with_a_literal_name_are_still_sinks():
+    # Only pathlib's unlink is exempt; rmtree of a fixed-name child is not.
+    sites, passed, _ = run(
+        "import shutil\n"
+        "def wipe(root):\n"
+        "    shutil.rmtree(root / 'data')\n"
+    )
+    assert (sites, passed) == (1, 0)

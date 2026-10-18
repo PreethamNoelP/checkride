@@ -11,6 +11,8 @@ explicitly.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-10-18
+
 ### Fixed (scores and verdicts can change)
 
 - **Approval that can be skipped is no longer a gate.** `if trusted(p) or
@@ -30,6 +32,29 @@ explicitly.
   `HANDLERS.get(name)(p)` and `f = do_rm; f(p)` now reach the helper instead of
   reporting its sink as "not agent-reachable".
 
+### Fixed (found by scanning real MCP servers)
+
+- **`repo_path = Path(arguments["repo_path"])` followed by
+  `validate_repo_path(repo_path, ...)` is validated.** The argument read was
+  only linked to its local when it was assigned directly, so wrapping it in
+  `Path()`, `str()`, `int()`, `float()` or `os.fspath()` made a checked input
+  look unchecked.
+- **`target_timezone`, `dest_currency` and the like are not locations.**
+  `target`/`dest`/`destination` beside a time zone, language, locale,
+  currency or unit word no longer makes an input risky; `target_path` still
+  does.
+- **`(git_dir / "MERGE_HEAD").unlink()` is not a model-chosen delete.** A
+  pathlib `.unlink()` whose last component is a string literal (or a loop
+  variable over literals) is no longer a critical file-delete site.
+
+### Packaging
+
+- The sdist now carries `tests/fixtures`, the benchmark and the documents the
+  README links to, so the test suite runs from the unpacked archive; CI
+  builds the sdist, unpacks it and runs the tests there.
+- CI checks that the wheel is byte-for-byte reproducible.
+- Added the `Typing :: Typed` classifier.
+
 ### Fixed
 
 - **SARIF file locations are percent-encoded.** `artifactLocation.uri` is a
@@ -42,6 +67,9 @@ explicitly.
 ### Documentation
 
 - The README's code-scanning example uses `upload-sarif@v4`.
+- The README says how to scan a framework or SDK repository without its
+  tests, docs and examples dominating the score, and drops the pre-release
+  install note.
 
 ## [0.5.1] — 2026-10-10
 

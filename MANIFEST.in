@@ -1,0 +1,8 @@
+# The sdist is what distro packagers and security reviewers build from, so it
+# carries everything needed to run the test suite and the benchmark, plus the
+# documents the README links to. (README.md, LICENSE, NOTICE and pyproject.toml
+# are included automatically.)
+include CHANGELOG.md RULES.md SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md
+recursive-include tests *.py *.json *.md
+recursive-include benchmarks *.py *.md
+global-exclude __pycache__ *.py[cod] *.sarif
