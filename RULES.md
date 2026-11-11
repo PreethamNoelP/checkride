@@ -137,7 +137,8 @@ exact names above count, not the receiver-agnostic suffixes.
 sensitive function (`ACTIONS = {"rm": shutil.rmtree}` then
 `ACTIONS[name](p)` or `ACTIONS.get(name)(p)`) takes the most severe label
 in the table; a computed attribute on a dangerous module
-(`getattr(os, name)(cmd)`) takes that module's worst member's label.
+(`getattr(os, name)(cmd)`, `getattr(runpy, name)(path)`,
+`getattr(cloudpickle, name)(blob)`) takes that module's worst member's label.
 
 **Limits shared by every rule.** A sink reached through a function's return
 value (`get_deleter()(p)`), a table built at run time, or a star import is

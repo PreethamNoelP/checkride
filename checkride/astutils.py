@@ -381,6 +381,8 @@ DYNAMIC_MODULE_LABELS: dict[str, str] = {
     "pickle": "code exec",
     "marshal": "code exec",
     "dill": "code exec",
+    "runpy": "code exec",
+    "cloudpickle": "code exec",
 }
 _LABEL_RANK = ("code exec", "shell exec", "sql exec", "payment", "remote delete", "file delete")
 

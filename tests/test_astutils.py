@@ -614,6 +614,10 @@ def test_kubernetes_deletes_are_remote_delete_sinks():
     ("from subprocess import run\nRUNNERS = [run]\ndef f(i, c):\n    RUNNERS[i](c)\n", "shell exec"),
     ("import os\ndef f(name, cmd):\n    getattr(os, name)(cmd)\n", "shell exec"),
     ("import pickle as p\ndef f(name, b):\n    getattr(p, name)(b)\n", "code exec"),
+    ("import runpy\ndef f(name, path):\n    getattr(runpy, name)(path)\n", "code exec"),
+    ("import cloudpickle\ndef f(name, blob):\n    getattr(cloudpickle, name)(blob)\n", "code exec"),
+    ("import runpy as r\ndef f(name, path):\n    getattr(r, name)(path)\n", "code exec"),
+    ("import cloudpickle as cp\ndef f(name, blob):\n    getattr(cp, name)(blob)\n", "code exec"),
 ])
 def test_dispatch_tables_and_computed_attributes_are_sinks(src, label):
     assert labels(src) == [label]
@@ -623,6 +627,7 @@ def test_dispatch_tables_and_computed_attributes_are_sinks(src, label):
     "HANDLERS = {'a': print}\ndef f(a):\n    HANDLERS[a]('x')\n",
     "def f(obj, name):\n    getattr(obj, name)()\n",
     "import math\ndef f(name, x):\n    getattr(math, name)(x)\n",
+    "import json\ndef f(name, text):\n    getattr(json, name)(text)\n",
 ])
 def test_harmless_tables_and_attributes_are_not_sinks(src):
     assert labels(src) == []
