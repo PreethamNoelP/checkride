@@ -99,6 +99,7 @@ def test_vulnerable_fixture_covers_every_detection_shape():
         "shell_async",                      # asyncio sink
         "load_state",                       # deserialization
         "evaluate",                         # eval
+        "execute_script",                   # runpy code execution
         "approve_after_the_fact",           # approval after the sink
         "model_confirms_itself",            # approval from a tool argument
         "authz_is_not_approval",            # machine authz, not a human
