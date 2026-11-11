@@ -73,6 +73,8 @@ SENSITIVE_EXACT: dict[str, str] = {
     "exec": "code exec",
     "builtins.eval": "code exec",
     "builtins.exec": "code exec",
+    "runpy.run_path": "code exec",
+    "runpy.run_module": "code exec",
     # deserialization that is equivalent to code execution on untrusted
     # input -- the realistic shape being "agent output -> loads()". Only
     # APIs with no safe mode are listed: yaml.load is deliberately absent
@@ -84,6 +86,8 @@ SENSITIVE_EXACT: dict[str, str] = {
     "marshal.loads": "code exec",
     "dill.load": "code exec",
     "dill.loads": "code exec",
+    "cloudpickle.load": "code exec",
+    "cloudpickle.loads": "code exec",
     "yaml.unsafe_load": "code exec",
     # state-changing HTTP
     "requests.delete": "remote delete",

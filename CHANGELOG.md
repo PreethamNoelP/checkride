@@ -11,6 +11,14 @@ explicitly.
 
 ## [Unreleased]
 
+### Fixed (scores and verdicts can change)
+
+- **Missing code-execution sinks**: `runpy.run_path`, `runpy.run_module`,
+  `cloudpickle.load` and `cloudpickle.loads` are now detected, including
+  calls through imports and aliases. Repositories using these calls can
+  receive new findings and different scores or verdicts. Generic loader
+  names, `json.loads` and `yaml.load(..., Loader=SafeLoader)` remain unflagged.
+
 ## [0.6.0] — 2026-10-18
 
 ### Fixed (scores and verdicts can change)
