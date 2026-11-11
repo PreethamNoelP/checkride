@@ -10,6 +10,7 @@ import asyncio
 import math
 import os
 import pickle
+import runpy
 import shutil
 import sqlite3
 import subprocess
@@ -73,6 +74,12 @@ def load_state(path):
 def evaluate(expression):
     """Arbitrary code execution as a service."""
     return eval(expression)
+
+
+@mcp.tool()
+def execute_script(path):
+    """Run a model-selected Python file without approval."""
+    return runpy.run_path(path)
 
 
 @mcp.tool()

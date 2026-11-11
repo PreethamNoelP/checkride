@@ -109,7 +109,7 @@ Defined in `checkride/astutils.py`. Every label below is **critical**.
 |---|---|
 | file delete | `os.remove`/`unlink`/`rmdir`/`removedirs`/`truncate`, `shutil.rmtree`; `.rmtree()`, `.unlink()`, `.rmdir()`, `.delete_file()`, `.remove_directory()` on any receiver. Not a sink: a pathlib `.unlink()` whose last path component is a string literal, or a loop variable over literals only (`(git_dir / "MERGE_HEAD").unlink()`) -- the model cannot choose what it removes. The directory part is not examined; see Rule 5 |
 | shell exec | `os.system`, `os.popen`, `subprocess.*`, `os.exec*`, `os.spawn*`, `os.posix_spawn*`, `pty.spawn`, `asyncio.create_subprocess_*`; `.Popen()`, `.check_output()` on any receiver |
-| code exec | `eval`, `exec`, `pickle.load(s)`, `marshal.load(s)`, `dill.load(s)`, `yaml.unsafe_load` |
+| code exec | `eval`, `exec`, `runpy.run_path`/`run_module`, `pickle.load(s)`, `marshal.load(s)`, `dill.load(s)`, `cloudpickle.load(s)`, `yaml.unsafe_load` |
 | sql exec | `execute`/`executemany`/`executescript`/`exec_driver_sql` on a DB-handle-shaped receiver (`cursor`, `conn`, `db`, `session`, `engine`, ...) **with a non-constant query** |
 | payment | `.charge()`, `.refund()`, `.payout()`, `.create_payment_intent()`, `.transfer_funds()`, ...; a money-moving method (`create`, `capture`, `confirm`, `sale`, ...) on a payment-resource receiver (`stripe.Refund`, `client.payment_intents`, `gateway.transaction`); `post`/`put`/`patch`/`request` to a known payment API host (Stripe, PayPal, Square, Braintree, Adyen, Razorpay, ...) |
 | remote delete | `requests.delete`, `httpx.delete`; `.delete_object(s)()`, `.delete_bucket()`, `.delete_many()`, `.drop_table()`, `.terminate_instances()`, Kubernetes `delete_namespaced_*`/`delete_collection_*`/`delete_cluster_*` |
@@ -123,7 +123,8 @@ literals, f-string and `+` fragments, and module names bound only to string
 literals (`QUERY = "SELECT ..."`, `STRIPE_URL = "https://api.stripe.com"`).
 
 **Deliberate non-entries.** Generic method names (`run`, `call`, `delete`,
-`drop`, `send`, `system`) on unknown receivers; `yaml.load` (safe with
+`drop`, `send`, `system`, `load`, `loads`, `run_path`, `run_module`) on unknown
+receivers; `json.loads`; `yaml.load` (safe with
 `SafeLoader` and ubiquitous); `open(path, "w")`; HTTP `GET`s; constant,
 parameterized SQL.
 
@@ -136,7 +137,8 @@ exact names above count, not the receiver-agnostic suffixes.
 sensitive function (`ACTIONS = {"rm": shutil.rmtree}` then
 `ACTIONS[name](p)` or `ACTIONS.get(name)(p)`) takes the most severe label
 in the table; a computed attribute on a dangerous module
-(`getattr(os, name)(cmd)`) takes that module's worst member's label.
+(`getattr(os, name)(cmd)`, `getattr(runpy, name)(path)`,
+`getattr(cloudpickle, name)(blob)`) takes that module's worst member's label.
 
 **Limits shared by every rule.** A sink reached through a function's return
 value (`get_deleter()(p)`), a table built at run time, or a star import is
