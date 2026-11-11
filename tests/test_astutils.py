@@ -263,6 +263,57 @@ def test_pickle_loads_is_a_code_exec_sink():
     assert sensitive_label(first_call("pickle.loads(blob)")) == "code exec"
 
 
+@pytest.mark.parametrize(
+    "call",
+    [
+        "runpy.run_path(path)",
+        "runpy.run_module(name)",
+        "cloudpickle.load(stream)",
+        "cloudpickle.loads(blob)",
+    ],
+)
+def test_runpy_and_cloudpickle_are_code_exec_sinks(call):
+    assert sensitive_label(first_call(call)) == "code exec"
+
+
+@pytest.mark.parametrize(
+    ("module", "name"),
+    [
+        ("runpy", "run_path"),
+        ("runpy", "run_module"),
+        ("cloudpickle", "load"),
+        ("cloudpickle", "loads"),
+    ],
+)
+@pytest.mark.parametrize("style", ["plain", "from_alias", "module_alias"])
+def test_runpy_and_cloudpickle_imports_are_code_exec_sinks(module, name, style):
+    if style == "plain":
+        source = f"from {module} import {name}\n{name}(payload)\n"
+    elif style == "from_alias":
+        source = f"from {module} import {name} as execute\nexecute(payload)\n"
+    else:
+        source = f"import {module} as executor\nexecutor.{name}(payload)\n"
+    ctx = FileContext.from_source(source)
+    assert [label for _, label in ctx.sensitive_calls] == ["code exec"]
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "json.loads(text)",
+        "yaml.load(text, Loader=SafeLoader)",
+        "loader.load(stream)",
+        "loader.loads(blob)",
+        "runner.run_path(path)",
+        "runner.run_module(name)",
+    ],
+)
+def test_safe_loaders_and_unrelated_receivers_are_not_code_exec_sinks(call):
+    assert sensitive_label(first_call(call)) is None
+    ctx = FileContext.from_source(call)
+    assert ctx.sensitive_calls == []
+
+
 def test_yaml_load_is_not_flagged_but_unsafe_load_is():
     # yaml.load(s, Loader=SafeLoader) is safe and ubiquitous -- flagging it
     # would make the critical gate untrustworthy. yaml.unsafe_load names
@@ -563,6 +614,10 @@ def test_kubernetes_deletes_are_remote_delete_sinks():
     ("from subprocess import run\nRUNNERS = [run]\ndef f(i, c):\n    RUNNERS[i](c)\n", "shell exec"),
     ("import os\ndef f(name, cmd):\n    getattr(os, name)(cmd)\n", "shell exec"),
     ("import pickle as p\ndef f(name, b):\n    getattr(p, name)(b)\n", "code exec"),
+    ("import runpy\ndef f(name, path):\n    getattr(runpy, name)(path)\n", "code exec"),
+    ("import cloudpickle\ndef f(name, blob):\n    getattr(cloudpickle, name)(blob)\n", "code exec"),
+    ("import runpy as r\ndef f(name, path):\n    getattr(r, name)(path)\n", "code exec"),
+    ("import cloudpickle as cp\ndef f(name, blob):\n    getattr(cp, name)(blob)\n", "code exec"),
 ])
 def test_dispatch_tables_and_computed_attributes_are_sinks(src, label):
     assert labels(src) == [label]
@@ -572,6 +627,7 @@ def test_dispatch_tables_and_computed_attributes_are_sinks(src, label):
     "HANDLERS = {'a': print}\ndef f(a):\n    HANDLERS[a]('x')\n",
     "def f(obj, name):\n    getattr(obj, name)()\n",
     "import math\ndef f(name, x):\n    getattr(math, name)(x)\n",
+    "import json\ndef f(name, text):\n    getattr(json, name)(text)\n",
 ])
 def test_harmless_tables_and_attributes_are_not_sinks(src):
     assert labels(src) == []
