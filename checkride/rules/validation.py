@@ -480,9 +480,12 @@ def _path_flow_names(fn: FunctionNode, ctx: FileContext, path_like: set[str]) ->
             if name is not None and name in _PATH_CALLS:
                 for arg in [*node.args, *(kw.value for kw in node.keywords)]:
                     names |= _names_in(arg)
-        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
-            if _builds_path(node.left, ctx, path_like):
-                names |= _names_in(node.right)
+        elif (
+            isinstance(node, ast.BinOp)
+            and isinstance(node.op, ast.Div)
+            and _builds_path(node.left, ctx, path_like)
+        ):
+            names |= _names_in(node.right)
     return names
 
 
